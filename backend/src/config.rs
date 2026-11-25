@@ -16,6 +16,7 @@ impl AppConfig {
         Self {
             host: env::var("PULSEFEED_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
             port: env::var("PULSEFEED_PORT")
+                .or_else(|_| env::var("PORT"))
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(8080),

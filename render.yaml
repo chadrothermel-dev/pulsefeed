@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: pulsefeed
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: pulsefeed-data
+      mountPath: /data
+      sizeGB: 2
+    envVars:
+      - key: PULSEFEED_HOST
+        value: 0.0.0.0
+      - key: PULSEFEED_DB
+        value: /data/pulsefeed.db
+      - key: PULSEFEED_STATIC_DIR
+        value: /app/dist
+      - key: PULSEFEED_JWT_SECRET
+        generateValue: true
+      - key: PULSEFEED_CONCURRENCY
+        value: "24"
+      - key: PULSEFEED_POLL_SECS
+        value: "300"

@@ -1,0 +1,4 @@
+# Replace with your domain name to get automatic Let's Encrypt HTTPS
+rss.yourdomain.com {
+    reverse_proxy pulsefeed:8080
+}

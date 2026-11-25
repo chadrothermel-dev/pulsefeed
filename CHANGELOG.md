@@ -2,6 +2,13 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.0.2] - 2026-11-24
+
+### Added
+- **1-Click Cloud Deployment:** Added `render.yaml` (auto-mounts persistent `/data` disk & generates JWT secret), `railway.toml`, `fly.toml`, multi-stage `Dockerfile`, `.dockerignore`, `docker-compose.yml`, and `Caddyfile` for automatic HTTPS.
+- Added 1-Click **Deploy to Render** and **Deploy on Railway** buttons plus Fly.io and Docker Compose instructions to `README.md`.
+- Added `PORT` environment variable fallback in `backend/src/config.rs` for zero-config PaaS port binding.
+
 ## [1.0.1] - 2026-11-24
 
 ### Added

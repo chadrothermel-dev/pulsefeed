@@ -4,6 +4,30 @@
 
 ---
 
+## 1-Click Cloud Deploy
+
+Deploy PulseFeed to the cloud in one click with persistent SQLite storage and automatic HTTPS:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/chadrothermel-dev/pulsefeed)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/github/chadrothermel-dev/pulsefeed)
+
+> **Railway Tip:** After deploying on Railway, attach a persistent **Volume** mounted at `/data` and set `PULSEFEED_JWT_SECRET` to a random string so your feeds and users persist across redeploys. (Render mounts `/data` and generates `PULSEFEED_JWT_SECRET` automatically via `render.yaml`.)
+
+### Deploy with Fly.io or Docker Compose (VPS / Home Lab)
+```bash
+# Option A: Fly.io (uses fly.toml with persistent /data volume)
+fly launch --copy-config --no-deploy
+fly secrets set PULSEFEED_JWT_SECRET="$(openssl rand -hex 32)"
+fly deploy
+
+# Option B: Docker Compose (any Linux VPS or Home Lab — includes optional Caddy HTTPS)
+git clone https://github.com/chadrothermel-dev/pulsefeed.git
+cd pulsefeed
+docker compose up -d
+```
+
+---
+
 ## Quick Download (Easy Windows Install)
 
 Want to run PulseFeed immediately without installing Rust or Node.js?
@@ -104,6 +128,10 @@ PULSEFEED_STATIC_DIR=./frontend/dist ./backend/target/release/pulsefeed
 ---
 
 ## Changelog
+
+### v1.0.2 — 2026-11-24
+- Added **1-Click Cloud Deploy** buttons for **Render** (`render.yaml`) and **Railway** (`railway.toml`), plus **Fly.io** (`fly.toml`) and **Docker Compose + Caddy HTTPS** (`Dockerfile`, `docker-compose.yml`, `Caddyfile`).
+- Added automatic `PORT` environment variable fallback alongside `PULSEFEED_PORT` for seamless PaaS deployments.
 
 ### v1.0.1 — 2026-11-24
 - `start.bat` and `start.ps1` now automatically create **Desktop** and **Start Menu** shortcuts with the custom `pulsefeed.ico` icon.
