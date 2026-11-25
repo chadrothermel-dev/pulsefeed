@@ -1,6 +1,12 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+# Ensure Desktop & Start Menu shortcuts with the PulseFeed icon are installed
+$shortcutScript = Join-Path $root "install-shortcuts.ps1"
+if (Test-Path $shortcutScript) {
+    & $shortcutScript
+}
+
 # Support both standalone ZIP layout (./pulsefeed.exe + ./dist) and source repo layout
 $standaloneExe = Join-Path $root "pulsefeed.exe"
 $sourceExe = Join-Path $root "backend\target\release\pulsefeed.exe"

@@ -9,12 +9,13 @@
 Want to run PulseFeed immediately without installing Rust or Node.js?
 
 1. **Download the latest pre-built ZIP:**
-   **[Download PulseFeed v1.0.0 for Windows (x64 ZIP)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-v1.0.0-windows-x64.zip)**
+   **[Download PulseFeed for Windows (x64 ZIP)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-windows-x64.zip)**
    *(Or browse all releases on the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases).)*
 2. **Extract the ZIP** to any folder (for example, `C:\PulseFeed`).
 3. **Double-click `start.bat`** (or run `.\start.ps1` in PowerShell).
-4. Your browser will open automatically to **http://127.0.0.1:8080**.
-5. Sign in with the default administrator account (change or add users inside **Enterprise Console → Users & RBAC**):
+   - This automatically creates **Desktop** and **Start Menu** shortcuts with the **PulseFeed** icon (which you can right-click → **Pin to taskbar**) and launches the app in your browser at **http://127.0.0.1:8080**.
+   - After first launch, you can simply click the **PulseFeed** Desktop or Taskbar icon to open it silently in standalone Chrome App Mode.
+4. Sign in with the default administrator account (change or add users inside **Enterprise Console → Users & RBAC**):
    - **Email:** `admin@pulsefeed.local`
    - **Password:** `admin123`
 
@@ -103,6 +104,11 @@ PULSEFEED_STATIC_DIR=./frontend/dist ./backend/target/release/pulsefeed
 ---
 
 ## Changelog
+
+### v1.0.1 — 2026-11-24
+- `start.bat` and `start.ps1` now automatically create **Desktop** and **Start Menu** shortcuts with the custom `pulsefeed.ico` icon.
+- Added silent background launcher (`launch-app.ps1`) that opens PulseFeed in Chrome App Mode when launched from Desktop/Taskbar.
+- Updated standalone Windows ZIP asset to `pulsefeed-windows-x64.zip` with icon and shortcut scripts bundled.
 
 ### v1.0.0 — 2026-11-24
 - Initial public release of **PulseFeed Enterprise RSS & Intelligence Reader**.

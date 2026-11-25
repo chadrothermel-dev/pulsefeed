@@ -4,6 +4,11 @@ set "ROOT=%~dp0"
 if "%PULSEFEED_PORT%"=="" set "PULSEFEED_PORT=8080"
 set "PULSEFEED_DB=%ROOT%pulsefeed.db"
 
+REM Automatically create/update Desktop and Start Menu shortcuts with the PulseFeed icon
+if exist "%ROOT%install-shortcuts.ps1" (
+    powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%ROOT%install-shortcuts.ps1"
+)
+
 if exist "%ROOT%pulsefeed.exe" (
     set "PULSEFEED_STATIC_DIR=%ROOT%dist"
     set "EXE=%ROOT%pulsefeed.exe"

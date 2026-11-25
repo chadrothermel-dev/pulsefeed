@@ -2,6 +2,13 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.0.1] - 2026-11-24
+
+### Added
+- **Automatic Desktop & Start Menu Shortcuts:** Running `start.bat` or `start.ps1` now automatically creates **PulseFeed** shortcuts on your Desktop and Start Menu with the custom emerald `pulsefeed.ico` icon (`install-shortcuts.ps1`).
+- **Silent App-Mode Launcher (`launch-app.ps1`):** Clicking the Desktop or Start Menu icon silently starts `pulsefeed.exe` in the background (if not already running) and opens PulseFeed in Chrome App Mode for a native desktop app feel.
+- **Stable Latest ZIP Download Asset:** Release package now uses `pulsefeed-windows-x64.zip` so the `latest` download link stays permanent across future updates.
+
 ## [1.0.0] - 2026-11-24
 
 ### Added

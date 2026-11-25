@@ -11,9 +11,10 @@ backend/target/
 *.db-shm
 *.db-wal
 
-# Release staging / archives
+# Release staging / archives & generated local wrapper
 /release-staging/
 *.zip
+launch-app.vbs
 
 # OS / IDE
 .DS_Store
