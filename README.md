@@ -58,10 +58,10 @@ Want to run PulseFeed locally without installing Rust, Node.js, or Android Studi
 - **[Download PulseFeed Portable ZIP (Windows x64)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-windows-x64.zip)**
 - Extract anywhere and double-click `start.bat` (Personal Edition) or `start-enterprise.bat` (Enterprise Edition).
 
-### Option 3: Native Android App (Kotlin + Jetpack Compose)
-- **[Download PulseFeed Android APK](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Android-v1.2.2.apk)** *(or check the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases) / [Actions](https://github.com/chadrothermel-dev/pulsefeed/actions))*
-- Install the APK on your Android phone (Android 8.0+), enter your hosted PulseFeed URL (e.g., Render/Railway) or your PC's local LAN IP (`http://192.168.x.x:8080`), and start reading with **Leo AI**, **FTS5 Search**, and **Topic Feed Discovery**!
-- *(Enterprise Edition only)* Default admin login: `admin@pulsefeed.local` / `admin123`.
+### Option 3: Standalone Android App (100% Local On-Device — No Server Required!)
+- **[Download PulseFeed Android APK (v1.3.0)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Android-v1.3.0.apk)** *(or check the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases))*
+- Install the APK on your Android phone (Android 8.0+) and open it — **no server needed!** It stores feeds and articles in an embedded on-device SQLite database, fetches RSS/Atom feeds directly, scores articles with Leo AI, supports **Search by Topic**, **Unfollow/Manage Feeds**, and 1-click **AI Summaries**.
+- *(Optional)* Tap the Settings gear anytime if you want to connect to a hosted **PulseFeed Enterprise** server.
 
 > **Note:** On first launch, PulseFeed automatically creates `pulsefeed.db` in the same folder, seeds starter feeds/folders/boards/Leo rules, and begins syncing live articles within 2 seconds.
 

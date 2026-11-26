@@ -61,35 +61,43 @@ class MainActivity : ComponentActivity() {
 fun PulseFeedRoot() {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("pulsefeed_prefs", Context.MODE_PRIVATE) }
+    val localEngine = remember { LocalPulseFeedEngine(context) }
+
+    // Default to 100% standalone on-device local mode (no server required!)
+    var mode by remember { mutableStateOf(prefs.getString("mode", "local") ?: "local") }
     var serverUrl by remember { mutableStateOf(prefs.getString("server_url", "") ?: "") }
     var token by remember { mutableStateOf(prefs.getString("jwt_token", "") ?: "") }
-    var edition by remember { mutableStateOf(prefs.getString("edition", "personal") ?: "personal") }
-    var connected by remember { mutableStateOf(serverUrl.isNotBlank()) }
+    var showServerSetup by remember { mutableStateOf(false) }
 
-    if (!connected) {
+    if (showServerSetup) {
         ConnectScreen(
-            initialUrl = serverUrl.ifBlank { "http://10.0.2.2:8080" },
-            onConnected = { url, jwt, ed ->
+            initialUrl = serverUrl.ifBlank { "https://your-server.onrender.com" },
+            onUseLocal = {
+                mode = "local"
+                prefs.edit().putString("mode", "local").apply()
+                showServerSetup = false
+            },
+            onConnected = { url, jwt ->
+                mode = "remote"
                 serverUrl = url
                 token = jwt
-                edition = ed
                 prefs.edit()
+                    .putString("mode", "remote")
                     .putString("server_url", url)
                     .putString("jwt_token", jwt)
-                    .putString("edition", ed)
                     .apply()
-                connected = true
+                showServerSetup = false
             }
         )
     } else {
+        val remoteApi = remember(mode, serverUrl, token) {
+            if (mode == "remote" && serverUrl.isNotBlank()) PulseFeedApi(serverUrl, token.ifBlank { null }) else null
+        }
         MainWorkspace(
-            api = remember(serverUrl, token) { PulseFeedApi(serverUrl, token.ifBlank { null }) },
-            edition = edition,
-            serverUrl = serverUrl,
-            onDisconnect = {
-                prefs.edit().remove("jwt_token").apply()
-                connected = false
-            }
+            localEngine = localEngine,
+            remoteApi = remoteApi,
+            modeLabel = if (remoteApi == null) "Personal • On-Device Local" else "Remote • $serverUrl",
+            onOpenServerSettings = { showServerSetup = true }
         )
     }
 }
@@ -97,7 +105,8 @@ fun PulseFeedRoot() {
 @Composable
 fun ConnectScreen(
     initialUrl: String,
-    onConnected: (String, String, String) -> Unit
+    onUseLocal: () -> Unit,
+    onConnected: (String, String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var url by remember { mutableStateOf(initialUrl) }
@@ -124,25 +133,40 @@ fun ConnectScreen(
             }
         }
         Spacer(Modifier.height(16.dp))
-        Text("PulseFeed", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Text("PulseFeed Mode", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(
-            "Connect to your local Personal PC or hosted Enterprise server",
+            "Run 100% locally on your phone or connect to a hosted Enterprise server",
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFF94A3B8)
         )
+        Spacer(Modifier.height(20.dp))
+
+        Button(
+            onClick = onUseLocal,
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Icon(Icons.Default.PhoneAndroid, null)
+            Spacer(Modifier.width(8.dp))
+            Text("Use Standalone Local Mode (No Server)")
+        }
+
         Spacer(Modifier.height(24.dp))
+        HorizontalDivider()
+        Spacer(Modifier.height(16.dp))
+        Text("Or Connect to Remote Server", style = MaterialTheme.typography.labelLarge, color = Color(0xFF94A3B8))
+        Spacer(Modifier.height(10.dp))
 
         OutlinedTextField(
             value = url,
             onValueChange = { url = it },
             label = { Text("PulseFeed Server URL") },
-            placeholder = { Text("https://your-app.onrender.com or http://192.168.1.50:8080") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
 
         if (needsLogin) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -150,7 +174,7 @@ fun ConnectScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -162,12 +186,12 @@ fun ConnectScreen(
         }
 
         if (error != null) {
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(10.dp))
             Text(error!!, color = Color(0xFFF87171), style = MaterialTheme.typography.bodySmall)
         }
 
-        Spacer(Modifier.height(20.dp))
-        Button(
+        Spacer(Modifier.height(14.dp))
+        OutlinedButton(
             onClick = {
                 scope.launch {
                     loading = true
@@ -176,12 +200,12 @@ fun ConnectScreen(
                         val api = PulseFeedApi(url)
                         val ed = api.getEdition()
                         if (ed.isPersonal) {
-                            onConnected(url, "", "personal")
+                            onConnected(url, "")
                         } else if (!needsLogin) {
                             needsLogin = true
                         } else {
                             val jwt = api.login(email, password)
-                            onConnected(url, jwt, "enterprise")
+                            onConnected(url, jwt)
                         }
                     } catch (e: Exception) {
                         error = e.message ?: "Could not reach server"
@@ -191,10 +215,10 @@ fun ConnectScreen(
                 }
             },
             enabled = !loading && url.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp),
             shape = RoundedCornerShape(14.dp)
         ) {
-            Text(if (loading) "Connecting..." else if (needsLogin) "Sign In" else "Connect")
+            Text(if (loading) "Connecting..." else if (needsLogin) "Sign In" else "Connect Remote Server")
         }
     }
 }
@@ -202,17 +226,18 @@ fun ConnectScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainWorkspace(
-    api: PulseFeedApi,
-    edition: String,
-    serverUrl: String,
-    onDisconnect: () -> Unit
+    localEngine: LocalPulseFeedEngine,
+    remoteApi: PulseFeedApi?,
+    modeLabel: String,
+    onOpenServerSettings: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    var activeTab by remember { mutableIntStateOf(0) } // 0=Today, 1=Leo, 2=Later, 3=Discover
+    var activeTab by remember { mutableIntStateOf(0) } // 0=Today, 1=Leo, 2=Saved, 3=Discover, 4=Feeds
     var searchQuery by remember { mutableStateOf("") }
     var articles by remember { mutableStateOf<List<ArticleItem>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var selectedArticleId by remember { mutableStateOf<String?>(null) }
+    var didInitialSync by remember { mutableStateOf(false) }
 
     val viewName = when (activeTab) {
         0 -> "today"
@@ -220,12 +245,16 @@ fun MainWorkspace(
         else -> "read_later"
     }
 
-    fun loadFeeds() {
-        if (activeTab == 3) return
+    fun loadArticles() {
+        if (activeTab >= 3) return
         scope.launch {
             loading = true
             try {
-                articles = api.getArticles(viewName, searchQuery)
+                articles = if (remoteApi != null) {
+                    remoteApi.getArticles(viewName, searchQuery)
+                } else {
+                    localEngine.getArticles(viewName, searchQuery)
+                }
             } catch (_: Exception) {
             } finally {
                 loading = false
@@ -233,17 +262,32 @@ fun MainWorkspace(
         }
     }
 
-    LaunchedEffect(activeTab, searchQuery) {
-        loadFeeds()
+    // On first launch in local mode, automatically fetch all starter RSS feeds right on the device!
+    LaunchedEffect(remoteApi) {
+        if (remoteApi == null && !didInitialSync) {
+            didInitialSync = true
+            val existing = localEngine.getArticles("today")
+            if (existing.isEmpty()) {
+                loading = true
+                localEngine.refreshAll()
+                loading = false
+            }
+            loadArticles()
+        }
+    }
+
+    LaunchedEffect(activeTab, searchQuery, remoteApi) {
+        loadArticles()
     }
 
     if (selectedArticleId != null) {
         ArticleReaderScreen(
-            api = api,
+            localEngine = localEngine,
+            remoteApi = remoteApi,
             articleId = selectedArticleId!!,
             onBack = {
                 selectedArticleId = null
-                loadFeeds()
+                loadArticles()
             }
         )
         return
@@ -256,9 +300,9 @@ fun MainWorkspace(
                     Column {
                         Text("PulseFeed", fontWeight = FontWeight.Bold)
                         Text(
-                            "${edition.replaceFirstChar { it.uppercase() }} • $serverUrl",
+                            modeLabel,
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF94A3B8),
+                            color = Emerald,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -268,14 +312,17 @@ fun MainWorkspace(
                     IconButton(onClick = {
                         scope.launch {
                             loading = true
-                            try { api.refreshAll() } catch (_: Exception) {}
-                            loadFeeds()
+                            try {
+                                if (remoteApi != null) remoteApi.refreshAll()
+                                else localEngine.refreshAll()
+                            } catch (_: Exception) {}
+                            loadArticles()
                         }
                     }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh Feeds")
                     }
-                    IconButton(onClick = onDisconnect) {
-                        Icon(Icons.Default.Settings, contentDescription = "Switch Server")
+                    IconButton(onClick = onOpenServerSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Mode / Server Settings")
                     }
                 }
             )
@@ -306,17 +353,32 @@ fun MainWorkspace(
                     icon = { Icon(Icons.Default.Explore, null) },
                     label = { Text("Discover") }
                 )
+                if (remoteApi == null) {
+                    NavigationBarItem(
+                        selected = activeTab == 4,
+                        onClick = { activeTab = 4 },
+                        icon = { Icon(Icons.Default.RssFeed, null) },
+                        label = { Text("Feeds") }
+                    )
+                }
             }
         }
     ) { padding ->
-        if (activeTab == 3) {
-            DiscoverFeedsScreen(api = api, modifier = Modifier.padding(padding))
-        } else {
-            Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        when (activeTab) {
+            3 -> DiscoverFeedsScreen(
+                localEngine = localEngine,
+                remoteApi = remoteApi,
+                modifier = Modifier.padding(padding)
+            )
+            4 -> ManageLocalFeedsScreen(
+                localEngine = localEngine,
+                modifier = Modifier.padding(padding)
+            )
+            else -> Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search articles (FTS5)...") },
+                    placeholder = { Text("Search articles...") },
                     leadingIcon = { Icon(Icons.Default.Search, null) },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
@@ -325,11 +387,15 @@ fun MainWorkspace(
 
                 if (loading && articles.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator()
+                            Spacer(Modifier.height(10.dp))
+                            Text("Syncing live RSS feeds...", color = Color(0xFF94A3B8), style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 } else if (articles.isEmpty()) {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("All caught up!", color = Color(0xFF94A3B8))
+                        Text("All caught up! Tap Refresh or Discover to add feeds.", color = Color(0xFF94A3B8))
                     }
                 } else {
                     LazyColumn(
@@ -400,18 +466,69 @@ fun MainWorkspace(
 }
 
 @Composable
-fun DiscoverFeedsScreen(api: PulseFeedApi, modifier: Modifier = Modifier) {
+fun ManageLocalFeedsScreen(localEngine: LocalPulseFeedEngine, modifier: Modifier = Modifier) {
+    var feeds by remember { mutableStateOf(localEngine.listFeeds()) }
+
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text(
+                "Subscribed Feeds (${feeds.size})",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(Modifier.height(4.dp))
+        }
+        items(feeds, key = { it.id }) { feed ->
+            Card(
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(feed.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(feed.category, style = MaterialTheme.typography.labelSmall, color = Emerald)
+                        Text(feed.feedUrl, style = MaterialTheme.typography.bodySmall, color = Color(0xFF94A3B8), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    IconButton(onClick = {
+                        localEngine.deleteFeed(feed.id)
+                        feeds = localEngine.listFeeds()
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Unfollow", tint = Color(0xFFF87171))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DiscoverFeedsScreen(
+    localEngine: LocalPulseFeedEngine,
+    remoteApi: PulseFeedApi?,
+    modifier: Modifier = Modifier
+) {
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
     var selectedCat by remember { mutableStateOf("All") }
-    var categories by remember { mutableStateOf(listOf("All", "Tech", "Cybersecurity", "AI & ML", "World News", "Finance", "Science", "Sports", "Gaming")) }
+    var categories by remember { mutableStateOf(listOf("All", "Tech", "Cybersecurity", "AI & ML", "Cloud & Infra", "World News", "Finance", "Science", "Sports", "Gaming")) }
     var results by remember { mutableStateOf<List<FeedSearchItem>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
 
-    LaunchedEffect(query, selectedCat) {
+    LaunchedEffect(query, selectedCat, remoteApi) {
         loading = true
         try {
-            val res = api.searchFeeds(query, selectedCat)
+            val res = if (remoteApi != null) {
+                remoteApi.searchFeeds(query, selectedCat)
+            } else {
+                localEngine.searchFeeds(query, selectedCat)
+            }
             if (res.categories.isNotEmpty()) categories = res.categories
             results = res.results
         } catch (_: Exception) {
@@ -484,7 +601,11 @@ fun DiscoverFeedsScreen(api: PulseFeedApi, modifier: Modifier = Modifier) {
                                 FilledTonalButton(onClick = {
                                     scope.launch {
                                         try {
-                                            api.subscribeFeed(item.feedUrl, item.title)
+                                            if (remoteApi != null) {
+                                                remoteApi.subscribeFeed(item.feedUrl, item.title)
+                                            } else {
+                                                localEngine.subscribeFeed(item.feedUrl, item.title, item.category)
+                                            }
                                             results = results.map {
                                                 if (it.feedUrl == item.feedUrl) it.copy(alreadySubscribed = true) else it
                                             }
@@ -505,7 +626,8 @@ fun DiscoverFeedsScreen(api: PulseFeedApi, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleReaderScreen(
-    api: PulseFeedApi,
+    localEngine: LocalPulseFeedEngine,
+    remoteApi: PulseFeedApi?,
     articleId: String,
     onBack: () -> Unit
 ) {
@@ -514,11 +636,14 @@ fun ArticleReaderScreen(
     var detail by remember { mutableStateOf<ArticleDetailResp?>(null) }
     var summarizing by remember { mutableStateOf(false) }
 
-    LaunchedEffect(articleId) {
+    LaunchedEffect(articleId, remoteApi) {
         try {
-            val d = api.getArticle(articleId)
+            val d = if (remoteApi != null) remoteApi.getArticle(articleId) else localEngine.getArticle(articleId)
             detail = d
-            if (!d.isRead) api.updateArticleState(articleId, isRead = true)
+            if (d != null && !d.isRead) {
+                if (remoteApi != null) remoteApi.updateArticleState(articleId, isRead = true)
+                else localEngine.updateArticleState(articleId, isRead = true)
+            }
         } catch (_: Exception) {}
     }
 
@@ -536,7 +661,8 @@ fun ArticleReaderScreen(
                         IconButton(onClick = {
                             scope.launch {
                                 val next = !d.isReadLater
-                                api.updateArticleState(d.id, isReadLater = next)
+                                if (remoteApi != null) remoteApi.updateArticleState(d.id, isReadLater = next)
+                                else localEngine.updateArticleState(d.id, isReadLater = next)
                                 detail = d.copy(isReadLater = next)
                             }
                         }) {
@@ -578,7 +704,6 @@ fun ArticleReaderScreen(
                 )
                 Spacer(Modifier.height(16.dp))
 
-                // Leo AI Summary Card
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = Violet.copy(alpha = 0.14f)),
@@ -597,7 +722,11 @@ fun ArticleReaderScreen(
                                     scope.launch {
                                         summarizing = true
                                         try {
-                                            val res = api.generateAiSummary(d.id)
+                                            val res = if (remoteApi != null) {
+                                                remoteApi.generateAiSummary(d.id)
+                                            } else {
+                                                localEngine.generateLocalSummary(d.id)
+                                            }
                                             detail = d.copy(aiSummary = res.aiSummary, aiSentiment = res.aiSentiment)
                                         } catch (_: Exception) {}
                                         summarizing = false

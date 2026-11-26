@@ -2,6 +2,14 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.3.0] - 2026-11-26
+
+### Added
+- **100% Standalone Local Android App (No Server Required!):**
+  - Embedded on-device SQLite database (`LocalDbHelper`) and native async RSS/Atom parser (`LocalPulseFeedEngine`) directly inside the Android APK.
+  - Launches straight into **Personal On-Device Local Mode** with 6 starter feeds, automatic initial sync, on-device Leo AI priority scoring, 1-click extractive AI summaries, **Discover / Search by Topic** feed finder (curated directory + live Feedly search + Google News/Reddit topic feeds), and a **Feeds** management tab to unfollow/remove feeds.
+  - Keeps optional **Connect to Remote Enterprise Server** mode in Settings for hosted deployments.
+
 ## [1.2.2] - 2026-11-26
 
 ### Fixed
