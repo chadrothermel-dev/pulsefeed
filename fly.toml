@@ -5,6 +5,7 @@ primary_region = "iad"
   dockerfile = "Dockerfile"
 
 [env]
+  PULSEFEED_EDITION = "enterprise"
   PULSEFEED_HOST = "0.0.0.0"
   PULSEFEED_PORT = "8080"
   PULSEFEED_DB = "/data/pulsefeed.db"

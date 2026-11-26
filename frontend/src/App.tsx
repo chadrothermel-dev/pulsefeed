@@ -5,6 +5,7 @@ import {
   ActiveNav,
   ArticleDetail,
   ArticleListItem,
+  EditionInfo,
   Feed,
   Folder,
   LayoutMode,
@@ -21,6 +22,7 @@ import { LeoRulesPanel } from './components/LeoRulesPanel';
 import { EnterpriseAdminPanel } from './components/EnterpriseAdminPanel';
 
 export default function App() {
+  const [edition, setEdition] = useState<'personal' | 'enterprise'>('personal');
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -76,16 +78,29 @@ export default function App() {
     localStorage.setItem('pulsefeed_theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
-  // Verify existing session
+  // Detect Personal vs Enterprise edition and verify session
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      setAuthChecked(true);
-      return;
-    }
-    apiFetch<User>('/auth/me')
-      .then((u) => setUser(u))
-      .catch(() => setToken(null))
+    apiFetch<EditionInfo>('/edition')
+      .then((info) => {
+        setEdition(info.edition);
+        if (info.is_personal) {
+          // Personal local mode: auto-authenticate seamlessly without login screen
+          return apiFetch<User>('/auth/me').then((u) => setUser(u));
+        }
+        const token = getToken();
+        if (!token) return;
+        return apiFetch<User>('/auth/me')
+          .then((u) => setUser(u))
+          .catch(() => setToken(null));
+      })
+      .catch(() => {
+        const token = getToken();
+        if (token) {
+          return apiFetch<User>('/auth/me')
+            .then((u) => setUser(u))
+            .catch(() => setToken(null));
+        }
+      })
       .finally(() => setAuthChecked(true));
   }, []);
 
@@ -309,6 +324,7 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <Sidebar
+        edition={edition}
         user={user}
         counts={counts}
         folders={folders}
@@ -340,7 +356,7 @@ export default function App() {
           }}
         />
       ) : activeNav.kind === 'admin' ? (
-        <EnterpriseAdminPanel currentUser={user} />
+        <EnterpriseAdminPanel edition={edition} currentUser={user} />
       ) : (
         <ArticleList
           title={headerTitle}

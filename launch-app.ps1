@@ -26,6 +26,7 @@ if (-not $running) {
     $psi.EnvironmentVariables["PULSEFEED_STATIC_DIR"] = $staticDir
     $psi.EnvironmentVariables["PULSEFEED_DB"] = (Join-Path $root "pulsefeed.db")
     $psi.EnvironmentVariables["PULSEFEED_PORT"] = "$port"
+    $psi.EnvironmentVariables["PULSEFEED_EDITION"] = if ($env:PULSEFEED_EDITION) { $env:PULSEFEED_EDITION } else { "personal" }
     [System.Diagnostics.Process]::Start($psi) | Out-Null
 
     # Wait briefly for server to accept connections

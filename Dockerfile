@@ -24,6 +24,7 @@ COPY --from=frontend-builder /app/frontend/dist /app/dist
 RUN mkdir -p /data
 VOLUME ["/data"]
 
+ENV PULSEFEED_EDITION=enterprise
 ENV PULSEFEED_HOST=0.0.0.0
 ENV PULSEFEED_PORT=8080
 ENV PULSEFEED_DB=/data/pulsefeed.db

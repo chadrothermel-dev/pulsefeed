@@ -2,6 +2,7 @@
 setlocal
 set "ROOT=%~dp0"
 if "%PULSEFEED_PORT%"=="" set "PULSEFEED_PORT=8080"
+if "%PULSEFEED_EDITION%"=="" set "PULSEFEED_EDITION=personal"
 set "PULSEFEED_DB=%ROOT%pulsefeed.db"
 
 REM Automatically create/update Desktop and Start Menu shortcuts with the PulseFeed icon

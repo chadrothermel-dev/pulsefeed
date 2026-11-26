@@ -2,6 +2,7 @@ mod audit;
 mod auth;
 mod config;
 mod db;
+mod feed_search;
 mod leo;
 mod models;
 mod routes;
@@ -75,15 +76,22 @@ async fn main() {
 
     let api_router = Router::new()
         .route("/health", get(|| async { Json(json!({ "status": "ok", "engine": "pulsefeed-rust" })) }))
+        .route("/edition", get(|axum::extract::State(st): axum::extract::State<AppState>| async move {
+            Json(json!({
+                "edition": st.config.edition,
+                "is_personal": st.config.is_personal(),
+            }))
+        }))
         // Auth
         .route("/auth/login", post(routes::auth_routes::login))
         .route("/auth/register", post(routes::auth_routes::register))
         .route("/auth/me", get(routes::auth_routes::me))
         .route("/auth/sso/config", get(routes::auth_routes::sso_public_config))
-        // Sidebar, Folders, Feeds, OPML
+        // Sidebar, Folders, Feeds, Topic Search, OPML
         .route("/sidebar", get(routes::feeds_routes::get_sidebar))
         .route("/folders", post(routes::feeds_routes::create_folder))
         .route("/folders/{id}", delete(routes::feeds_routes::delete_folder))
+        .route("/feeds/search", get(routes::feeds_routes::search_feeds))
         .route("/feeds/discover", post(routes::feeds_routes::discover_feeds))
         .route("/feeds", post(routes::feeds_routes::create_feed))
         .route("/feeds/refresh-all", post(routes::feeds_routes::refresh_all))
@@ -145,6 +153,10 @@ async fn main() {
         .await
         .expect("Failed to bind TCP listener");
 
-    info!("PulseFeed Enterprise RSS Engine listening on http://{}", addr);
+    info!(
+        "PulseFeed ({} Edition) listening on http://{}",
+        if config.is_personal() { "Personal" } else { "Enterprise" },
+        addr
+    );
     axum::serve(listener, app).await.expect("Server error");
 }

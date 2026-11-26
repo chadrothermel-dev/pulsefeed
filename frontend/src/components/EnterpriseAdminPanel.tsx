@@ -27,10 +27,12 @@ import {
 } from '../types';
 
 interface Props {
+  edition: 'personal' | 'enterprise';
   currentUser: User;
 }
 
-export const EnterpriseAdminPanel: React.FC<Props> = ({ currentUser }) => {
+export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) => {
+  const isPersonal = edition === 'personal';
   const isAdmin = currentUser.role === 'admin';
   const [tab, setTab] = useState<'telemetry' | 'users' | 'webhooks' | 'apikeys' | 'settings' | 'audit'>('telemetry');
 
@@ -166,12 +168,12 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ currentUser }) => {
   };
 
   const tabs = [
-    { id: 'telemetry', label: 'Overview & Health', icon: Activity, adminOnly: false },
-    { id: 'users', label: 'Users & RBAC', icon: Users, adminOnly: true },
-    { id: 'webhooks', label: 'Webhooks & Alerts', icon: Webhook, adminOnly: false },
-    { id: 'apikeys', label: 'API Keys', icon: Key, adminOnly: false },
-    { id: 'settings', label: 'LLM & SSO', icon: Settings, adminOnly: true },
-    { id: 'audit', label: 'Audit Logs', icon: FileText, adminOnly: true },
+    { id: 'telemetry', label: 'Overview & Health', icon: Activity, adminOnly: false, enterpriseOnly: false },
+    { id: 'users', label: 'Users & RBAC', icon: Users, adminOnly: true, enterpriseOnly: true },
+    { id: 'webhooks', label: 'Webhooks & Alerts', icon: Webhook, adminOnly: false, enterpriseOnly: false },
+    { id: 'apikeys', label: 'API Keys', icon: Key, adminOnly: false, enterpriseOnly: false },
+    { id: 'settings', label: isPersonal ? 'AI / LLM Settings' : 'LLM & SSO', icon: Settings, adminOnly: true, enterpriseOnly: false },
+    { id: 'audit', label: 'Audit Logs', icon: FileText, adminOnly: true, enterpriseOnly: true },
   ] as const;
 
   return (
@@ -180,17 +182,19 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ currentUser }) => {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
             <Shield className="w-6 h-6 text-emerald-500" />
-            Enterprise Administration &amp; Integrations
+            {isPersonal ? 'Settings, AI & System Health' : 'Enterprise Administration & Integrations'}
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manage RBAC users, Slack/Teams webhooks, SIEM API keys, Hybrid LLM providers, OIDC SSO, and audit logs.
+            {isPersonal
+              ? 'Monitor feed health, configure optional Gemini/OpenAI/Ollama AI summaries, webhooks, and local API keys.'
+              : 'Manage RBAC users, Slack/Teams webhooks, SIEM API keys, Hybrid LLM providers, OIDC SSO, and audit logs.'}
           </p>
         </div>
 
         {/* Sub-Nav Tabs */}
         <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
           {tabs
-            .filter((t) => !t.adminOnly || isAdmin)
+            .filter((t) => (!t.adminOnly || isAdmin) && (!t.enterpriseOnly || !isPersonal))
             .map((t) => {
               const Icon = t.icon;
               return (
@@ -545,44 +549,46 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ currentUser }) => {
               </div>
             </div>
 
-            <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 dark:text-white">
-                  Enterprise SSO / OIDC Configuration
-                </h3>
-                <label className="flex items-center gap-2 text-xs font-semibold">
+            {!isPersonal && (
+              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-900 dark:text-white">
+                    Enterprise SSO / OIDC Configuration
+                  </h3>
+                  <label className="flex items-center gap-2 text-xs font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={settings.sso_enabled}
+                      onChange={(e) => setSettings({ ...settings, sso_enabled: e.target.checked })}
+                    />
+                    Enable SSO Button
+                  </label>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
-                    type="checkbox"
-                    checked={settings.sso_enabled}
-                    onChange={(e) => setSettings({ ...settings, sso_enabled: e.target.checked })}
+                    type="text"
+                    value={settings.sso_provider_name}
+                    onChange={(e) => setSettings({ ...settings, sso_provider_name: e.target.value })}
+                    placeholder="Microsoft Entra ID / Okta"
+                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
                   />
-                  Enable SSO Button
-                </label>
+                  <input
+                    type="text"
+                    value={settings.sso_issuer_url}
+                    onChange={(e) => setSettings({ ...settings, sso_issuer_url: e.target.value })}
+                    placeholder="https://login.microsoftonline.com/.../v2.0"
+                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                  />
+                  <input
+                    type="text"
+                    value={settings.sso_client_id}
+                    onChange={(e) => setSettings({ ...settings, sso_client_id: e.target.value })}
+                    placeholder="OIDC Client ID"
+                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  value={settings.sso_provider_name}
-                  onChange={(e) => setSettings({ ...settings, sso_provider_name: e.target.value })}
-                  placeholder="Microsoft Entra ID / Okta"
-                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
-                />
-                <input
-                  type="text"
-                  value={settings.sso_issuer_url}
-                  onChange={(e) => setSettings({ ...settings, sso_issuer_url: e.target.value })}
-                  placeholder="https://login.microsoftonline.com/.../v2.0"
-                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
-                />
-                <input
-                  type="text"
-                  value={settings.sso_client_id}
-                  onChange={(e) => setSettings({ ...settings, sso_client_id: e.target.value })}
-                  placeholder="OIDC Client ID"
-                  className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
+            )}
 
             <button
               type="submit"

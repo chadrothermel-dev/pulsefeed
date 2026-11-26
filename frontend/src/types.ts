@@ -202,6 +202,23 @@ export interface DiscoveredFeed {
   site_url: string;
 }
 
+export interface FeedSearchResult {
+  title: string;
+  feed_url: string;
+  site_url: string;
+  description: string;
+  category: string;
+  icon_url: string | null;
+  subscribers: number | null;
+  source: 'directory' | 'live' | 'topic_feed' | string;
+  already_subscribed: boolean;
+}
+
+export interface EditionInfo {
+  edition: 'personal' | 'enterprise';
+  is_personal: boolean;
+}
+
 export type LayoutMode = 'magazine' | 'title' | 'cards';
 
 export type ActiveNav =

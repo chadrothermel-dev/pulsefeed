@@ -29,6 +29,7 @@ if (Test-Path $standaloneExe) {
 $env:PULSEFEED_STATIC_DIR = $staticDir
 $env:PULSEFEED_DB = Join-Path $root "pulsefeed.db"
 if (-not $env:PULSEFEED_PORT) { $env:PULSEFEED_PORT = "8080" }
+if (-not $env:PULSEFEED_EDITION) { $env:PULSEFEED_EDITION = "personal" }
 
-Write-Host "Starting PulseFeed Enterprise RSS Reader at http://127.0.0.1:$($env:PULSEFEED_PORT)" -ForegroundColor Green
+Write-Host "Starting PulseFeed ($($env:PULSEFEED_EDITION) edition) at http://127.0.0.1:$($env:PULSEFEED_PORT)" -ForegroundColor Green
 & $exe

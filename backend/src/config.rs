@@ -2,6 +2,7 @@ use std::env;
 
 #[derive(Clone, Debug)]
 pub struct AppConfig {
+    pub edition: String, // "personal" | "enterprise"
     pub host: String,
     pub port: u16,
     pub db_path: String,
@@ -12,8 +13,22 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
+    pub fn is_personal(&self) -> bool {
+        self.edition.eq_ignore_ascii_case("personal")
+    }
+
     pub fn from_env() -> Self {
+        let edition = env::var("PULSEFEED_EDITION")
+            .unwrap_or_else(|_| "personal".to_string())
+            .to_lowercase();
+        let edition = if edition == "enterprise" {
+            "enterprise".to_string()
+        } else {
+            "personal".to_string()
+        };
+
         Self {
+            edition,
             host: env::var("PULSEFEED_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
             port: env::var("PULSEFEED_PORT")
                 .or_else(|_| env::var("PORT"))

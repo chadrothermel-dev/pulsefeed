@@ -9,6 +9,8 @@ services:
       mountPath: /data
       sizeGB: 2
     envVars:
+      - key: PULSEFEED_EDITION
+        value: enterprise
       - key: PULSEFEED_HOST
         value: 0.0.0.0
       - key: PULSEFEED_DB

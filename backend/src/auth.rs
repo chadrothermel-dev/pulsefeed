@@ -103,6 +103,24 @@ impl FromRequestParts<AppState> for AuthUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
+        // Personal Edition: seamless local single-user mode with zero login friction
+        if state.config.is_personal() && parts.headers.get(header::AUTHORIZATION).is_none() {
+            let conn = state
+                .db
+                .get()
+                .map_err(|_| AuthError(StatusCode::INTERNAL_SERVER_ERROR, "DB error".into()))?;
+            let owner: Option<(String, String, String, String)> = conn
+                .query_row(
+                    "SELECT id, email, name, role FROM users WHERE is_active = 1 ORDER BY created_at ASC LIMIT 1",
+                    [],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+                )
+                .ok();
+            if let Some((id, email, name, role)) = owner {
+                return Ok(AuthUser { id, email, name, role });
+            }
+        }
+
         let auth_header = parts
             .headers
             .get(header::AUTHORIZATION)

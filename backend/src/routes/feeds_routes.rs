@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{header, StatusCode},
     response::IntoResponse,
     Json,
@@ -8,15 +8,47 @@ use chrono::Utc;
 use rusqlite::params;
 use serde::Deserialize;
 use serde_json::json;
+use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::{
     audit::log_audit,
     auth::AuthUser,
+    feed_search,
     models::{Feed, Folder, SidebarCounts},
     rss_engine,
     AppState,
 };
+
+#[derive(Deserialize)]
+pub struct FeedSearchQuery {
+    pub q: Option<String>,
+    pub category: Option<String>,
+}
+
+pub async fn search_feeds(
+    State(state): State<AppState>,
+    _user: AuthUser,
+    Query(params_q): Query<FeedSearchQuery>,
+) -> impl IntoResponse {
+    let subscribed: HashSet<String> = {
+        let Ok(conn) = state.db.get() else {
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"error": "DB error"}))).into_response();
+        };
+        let mut stmt = conn.prepare("SELECT lower(feed_url) FROM feeds").unwrap();
+        stmt.query_map([], |r| r.get(0))
+            .map(|it| it.flatten().collect())
+            .unwrap_or_default()
+    };
+
+    let q = params_q.q.as_deref().unwrap_or("");
+    let results = feed_search::search_feeds(&state.http, q, params_q.category.as_deref(), &subscribed).await;
+    Json(json!({
+        "categories": feed_search::list_categories(),
+        "results": results,
+    }))
+    .into_response()
+}
 
 #[derive(Deserialize)]
 pub struct CreateFolderReq {

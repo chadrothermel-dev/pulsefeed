@@ -2,6 +2,16 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.1.0] - 2026-11-26
+
+### Added
+- **Personal Edition (Local) vs. Enterprise Edition (Hosted):**
+  - Controlled via `PULSEFEED_EDITION=personal` (default for local `start.bat`, `start.ps1`, and Desktop shortcut) or `PULSEFEED_EDITION=enterprise` (default for `Dockerfile`, Render, Railway, Fly.io, Docker Compose, and `start-enterprise.bat`).
+  - **Personal Edition** launches directly into your feeds with **zero login screen**, a clean local interface (`Saved Boards`, `Settings & Health`), unlimited feeds, Leo AI rules, deduplication, highlights, and optional LLM summaries.
+  - **Enterprise Edition** preserves full multi-user authentication, RBAC (`admin`/`editor`/`member`/`viewer`), Team Boards with Public RSS, SSO/OIDC, Webhooks, API Keys, and Audit Logs.
+- **Topic-Based RSS Feed Search (`GET /api/feeds/search`):**
+  - Upgraded the **Follow** modal with a **Search by Topic** tab featuring 10+ category browse pills (Tech, Programming, Cybersecurity, AI & ML, Cloud & Infra, World News, Finance, Science, Sports, Gaming), a built-in curated directory, live web feed search, and automatic Google News & Reddit live topic RSS feeds so you can follow *any* subject in one click.
+
 ## [1.0.2] - 2026-11-24
 
 ### Added

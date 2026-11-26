@@ -28,18 +28,35 @@ docker compose up -d
 
 ---
 
-## Quick Download (Easy Windows Install)
+## Personal vs. Enterprise Editions
 
-Want to run PulseFeed immediately without installing Rust or Node.js?
+PulseFeed ships as a single ultra-fast binary with **two built-in editions**:
+
+| Feature | Personal Edition (Local) | Enterprise Edition (Hosted) |
+|---|---|---|
+| **Default For** | `start.bat`, `start.ps1`, Desktop Icon | Docker, Render, Railway, Fly.io, `start-enterprise.bat` |
+| **Login Screen** | **Zero-login instant access** | Multi-user Argon2 + JWT login & SSO/OIDC |
+| **Unlimited Feeds & Topic Search** | Included | Included |
+| **Leo AI Rules, Deduplication & Summaries** | Included | Included |
+| **Boards, Highlights & Notes** | Personal Saved Boards | Shared Team Boards + Public RSS Output |
+| **RBAC, User Management & Audit Logs** | Hidden for simplicity | Full Enterprise Admin Console |
+
+Switch editions anytime via `PULSEFEED_EDITION=personal` or `PULSEFEED_EDITION=enterprise`.
+
+---
+
+## Quick Download (Easy Windows Install — Personal Edition)
+
+Want to run PulseFeed locally on Windows without installing Rust or Node.js?
 
 1. **Download the latest pre-built ZIP:**
    **[Download PulseFeed for Windows (x64 ZIP)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-windows-x64.zip)**
    *(Or browse all releases on the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases).)*
 2. **Extract the ZIP** to any folder (for example, `C:\PulseFeed`).
-3. **Double-click `start.bat`** (or run `.\start.ps1` in PowerShell).
-   - This automatically creates **Desktop** and **Start Menu** shortcuts with the **PulseFeed** icon (which you can right-click → **Pin to taskbar**) and launches the app in your browser at **http://127.0.0.1:8080**.
-   - After first launch, you can simply click the **PulseFeed** Desktop or Taskbar icon to open it silently in standalone Chrome App Mode.
-4. Sign in with the default administrator account (change or add users inside **Enterprise Console → Users & RBAC**):
+3. **Double-click `start.bat`** (Personal Edition — zero login!) or `start-enterprise.bat` (multi-user Enterprise Edition).
+   - This automatically creates **Desktop** and **Start Menu** shortcuts with the **PulseFeed** icon (which you can right-click → **Pin to taskbar**) and opens **http://127.0.0.1:8080**.
+   - Click **+ Follow** to search for RSS feeds by **topic or interest** (e.g., *cybersecurity*, *AI*, *gardening*, *NFL*, *finance*), browse categories, paste a URL, or import OPML.
+4. *(Enterprise Edition only)* Default admin login:
    - **Email:** `admin@pulsefeed.local`
    - **Password:** `admin123`
 
@@ -128,6 +145,11 @@ PULSEFEED_STATIC_DIR=./frontend/dist ./backend/target/release/pulsefeed
 ---
 
 ## Changelog
+
+### v1.1.0 — 2026-11-26
+- Added **Personal Edition** (`PULSEFEED_EDITION=personal`, zero-login local default) alongside **Enterprise Edition** (`PULSEFEED_EDITION=enterprise`, hosted cloud default).
+- Added **Search by Topic** feed finder with curated category browsing, live web feed search, and automatic Google News / Reddit topic RSS feeds.
+- Added `start-enterprise.bat` alongside `start.bat` (Personal Edition default).
 
 ### v1.0.2 — 2026-11-24
 - Added **1-Click Cloud Deploy** buttons for **Render** (`render.yaml`) and **Railway** (`railway.toml`), plus **Fly.io** (`fly.toml`) and **Docker Compose + Caddy HTTPS** (`Dockerfile`, `docker-compose.yml`, `Caddyfile`).

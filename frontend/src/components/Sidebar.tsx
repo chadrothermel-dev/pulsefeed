@@ -25,6 +25,7 @@ import {
 import { ActiveNav, Feed, Folder, SidebarCounts, TeamBoard, User } from '../types';
 
 interface Props {
+  edition: 'personal' | 'enterprise';
   user: User;
   counts: SidebarCounts;
   folders: Folder[];
@@ -42,6 +43,7 @@ interface Props {
 }
 
 export const Sidebar: React.FC<Props> = ({
+  edition,
   user,
   counts,
   folders,
@@ -57,6 +59,7 @@ export const Sidebar: React.FC<Props> = ({
   onToggleDarkMode,
   onLogout,
 }) => {
+  const isPersonal = edition === 'personal';
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
   const toggleFolder = (id: string, e: React.MouseEvent) => {
@@ -95,7 +98,7 @@ export const Sidebar: React.FC<Props> = ({
               PulseFeed
             </div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Enterprise
+              {isPersonal ? 'Personal Local' : 'Enterprise'}
             </div>
           </div>
         </div>
@@ -192,11 +195,11 @@ export const Sidebar: React.FC<Props> = ({
           </button>
         </div>
 
-        {/* Team Boards */}
+        {/* Boards */}
         <div>
           <div className="px-3 mb-1.5 flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Team Boards
+              {isPersonal ? 'Saved Boards' : 'Team Boards'}
             </span>
             <button
               onClick={onOpenNewBoard}
@@ -331,11 +334,11 @@ export const Sidebar: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Enterprise Tools */}
+        {/* Intelligence & Settings */}
         <div>
           <div className="px-3 mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Intelligence &amp; Enterprise
+              {isPersonal ? 'Intelligence & Settings' : 'Intelligence & Enterprise'}
             </span>
           </div>
           <div className="space-y-0.5">
@@ -354,7 +357,7 @@ export const Sidebar: React.FC<Props> = ({
             >
               <span className="flex items-center gap-2.5">
                 <Shield className="w-4 h-4 text-emerald-500" />
-                Enterprise Console
+                {isPersonal ? 'Settings & Health' : 'Enterprise Console'}
               </span>
             </button>
           </div>
@@ -391,13 +394,15 @@ export const Sidebar: React.FC<Props> = ({
           >
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
-          <button
-            onClick={onLogout}
-            title="Sign Out"
-            className="p-1.5 rounded-lg text-slate-500 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
+          {!isPersonal && (
+            <button
+              onClick={onLogout}
+              title="Sign Out"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
     </aside>
