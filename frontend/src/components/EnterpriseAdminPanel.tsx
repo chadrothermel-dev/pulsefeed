@@ -230,7 +230,7 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) 
               { label: 'Failing Feeds', val: telemetry.failing_feeds, icon: AlertTriangle, color: 'text-amber-500' },
               { label: 'SQLite DB Size', val: `${(telemetry.db_size_bytes / 1024 / 1024).toFixed(2)} MB`, icon: Database, color: 'text-violet-500' },
               { label: 'Workspace Users', val: telemetry.total_users, icon: Users, color: 'text-cyan-500' },
-              { label: 'Team Boards', val: telemetry.total_boards, icon: Shield, color: 'text-emerald-500' },
+              { label: isPersonal ? 'Saved Boards' : 'Team Boards', val: telemetry.total_boards, icon: Shield, color: 'text-emerald-500' },
               { label: 'Active Leo Rules', val: telemetry.total_rules, icon: Activity, color: 'text-violet-500' },
               { label: 'Webhooks', val: telemetry.total_webhooks, icon: Webhook, color: 'text-pink-500' },
             ].map((card) => {
@@ -594,7 +594,7 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) 
               type="submit"
               className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer"
             >
-              Save Enterprise Settings
+              {isPersonal ? 'Save Settings' : 'Save Enterprise Settings'}
             </button>
           </form>
         )}

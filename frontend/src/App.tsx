@@ -70,6 +70,14 @@ export default function App() {
   const [newBoardVis, setNewBoardVis] = useState<'team' | 'public' | 'private'>('team');
   const [showShortcuts, setShowShortcuts] = useState(false);
 
+  // Keep browser/app window title synced with active edition
+  useEffect(() => {
+    document.title =
+      edition === 'personal'
+        ? 'PulseFeed Personal — RSS & Intelligence Reader'
+        : 'PulseFeed Enterprise — Intelligence & RSS Reader';
+  }, [edition]);
+
   // Apply dark mode class
   useEffect(() => {
     const root = document.documentElement;
@@ -400,6 +408,7 @@ export default function App() {
 
       {activeNav.kind === 'leo_rules' ? (
         <LeoRulesPanel
+          edition={edition}
           boards={boards}
           onChanged={() => {
             loadSidebar();
@@ -439,6 +448,7 @@ export default function App() {
 
       {(readerArticle || loadingReader) && (
         <ArticleReader
+          edition={edition}
           article={readerArticle}
           loading={loadingReader}
           boards={boards}
@@ -505,7 +515,9 @@ export default function App() {
             className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 shadow-2xl"
           >
             <div className="flex items-center justify-between">
-              <h3 className="font-bold">Create Enterprise Team Board</h3>
+              <h3 className="font-bold">
+                {edition === 'personal' ? 'Create Saved Board' : 'Create Enterprise Team Board'}
+              </h3>
               <button type="button" onClick={() => setShowNewBoard(false)} className="cursor-pointer">
                 <X className="w-4 h-4 text-slate-400" />
               </button>

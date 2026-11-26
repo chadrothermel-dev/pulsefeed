@@ -4,11 +4,13 @@ import { apiFetch } from '../api';
 import { LeoRule, TeamBoard, WebhookEndpoint } from '../types';
 
 interface Props {
+  edition: 'personal' | 'enterprise';
   boards: TeamBoard[];
   onChanged: () => void;
 }
 
-export const LeoRulesPanel: React.FC<Props> = ({ boards, onChanged }) => {
+export const LeoRulesPanel: React.FC<Props> = ({ edition, boards, onChanged }) => {
+  const isPersonal = edition === 'personal';
   const [rules, setRules] = useState<LeoRule[]>([]);
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
   const [name, setName] = useState('');
@@ -90,7 +92,7 @@ export const LeoRulesPanel: React.FC<Props> = ({ boards, onChanged }) => {
               Leo AI Intelligence &amp; Automation Rules
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Prioritize high-signal stories, mute noise, auto-tag, auto-curate to Team Boards, and trigger Slack/Teams/Webhook alerts.
+              Prioritize high-signal stories, mute noise, auto-tag, auto-curate to {isPersonal ? 'Boards' : 'Team Boards'}, and trigger Slack/Teams/Webhook alerts.
             </p>
           </div>
           <button
@@ -132,7 +134,7 @@ export const LeoRulesPanel: React.FC<Props> = ({ boards, onChanged }) => {
               <option value="priority">Priority Boost</option>
               <option value="mute">Mute Filter (Hide Noise)</option>
               <option value="auto_tag">Auto-Tag</option>
-              <option value="auto_board">Auto-Save to Team Board</option>
+              <option value="auto_board">{isPersonal ? 'Auto-Save to Board' : 'Auto-Save to Team Board'}</option>
               <option value="alert">Real-Time Webhook Alert</option>
             </select>
             <select

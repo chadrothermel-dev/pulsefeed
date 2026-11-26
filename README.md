@@ -50,7 +50,7 @@ Switch editions anytime via `PULSEFEED_EDITION=personal` or `PULSEFEED_EDITION=e
 Want to run PulseFeed locally without installing Rust, Node.js, or Android Studio?
 
 ### Option 1: Windows Personal Edition Installer (Recommended)
-1. **[Download PulseFeed Personal Setup (Windows .exe)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Personal-Setup-v1.2.1.exe)**
+1. **[Download PulseFeed Personal Setup (Windows .exe)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Personal-Setup-v1.2.2.exe)**
 2. Run the installer — choose your install folder and check **Create a desktop icon** (optional) and **Start Menu shortcut**.
 3. Click **Finish** to launch **PulseFeed Personal Edition** immediately with **zero login screen**!
 
@@ -59,7 +59,7 @@ Want to run PulseFeed locally without installing Rust, Node.js, or Android Studi
 - Extract anywhere and double-click `start.bat` (Personal Edition) or `start-enterprise.bat` (Enterprise Edition).
 
 ### Option 3: Native Android App (Kotlin + Jetpack Compose)
-- **[Download PulseFeed Android APK](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Android-v1.2.1.apk)** *(or check the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases) / [Actions](https://github.com/chadrothermel-dev/pulsefeed/actions))*
+- **[Download PulseFeed Android APK](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Android-v1.2.2.apk)** *(or check the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases) / [Actions](https://github.com/chadrothermel-dev/pulsefeed/actions))*
 - Install the APK on your Android phone (Android 8.0+), enter your hosted PulseFeed URL (e.g., Render/Railway) or your PC's local LAN IP (`http://192.168.x.x:8080`), and start reading with **Leo AI**, **FTS5 Search**, and **Topic Feed Discovery**!
 - *(Enterprise Edition only)* Default admin login: `admin@pulsefeed.local` / `admin123`.
 

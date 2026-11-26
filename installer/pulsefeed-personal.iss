@@ -1,6 +1,6 @@
 ; PulseFeed Personal Edition — Windows Installer Script (Inno Setup 6)
 #define MyAppName "PulseFeed"
-#define MyAppVersion "1.2.1"
+#define MyAppVersion "1.2.2"
 #define MyAppPublisher "PulseFeed"
 #define MyAppURL "https://github.com/chadrothermel-dev/pulsefeed"
 #define MyAppExeName "pulsefeed.exe"
@@ -42,7 +42,6 @@ Source: "..\launch-app.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\launch-app.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\install-shortcuts.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\start-enterprise.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
@@ -56,3 +55,12 @@ Filename: "C:\Windows\System32\wscript.exe"; Parameters: """{app}\launch-app.vbs
 
 [UninstallRun]
 Filename: "taskkill.exe"; Parameters: "/F /IM pulsefeed.exe"; Flags: runhidden; RunOnceId: "StopPulseFeed"
+
+[Code]
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
+begin
+  Exec('taskkill.exe', '/F /IM pulsefeed.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  Result := '';
+end;

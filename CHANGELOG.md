@@ -2,6 +2,12 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.2.2] - 2026-11-26
+
+### Fixed
+- **Personal Edition Branding:** Updated window/tab title (`PulseFeed Personal — RSS & Intelligence Reader`) and removed all remaining "Enterprise" / "Team Board" / "Team Notes" labels when running in Personal Edition.
+- **Clean Upgrade/Restart on Install:** `PulseFeed-Personal-Setup` now automatically stops any previously running `pulsefeed.exe` before installing so the updated Personal Edition binary and UI (including Topic Feed Search and Delete controls) load cleanly right after setup.
+
 ## [1.2.1] - 2026-11-26
 
 ### Added

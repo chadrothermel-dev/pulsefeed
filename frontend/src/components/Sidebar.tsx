@@ -210,7 +210,7 @@ export const Sidebar: React.FC<Props> = ({
             </span>
             <button
               onClick={onOpenNewBoard}
-              title="New Team Board"
+              title={isPersonal ? 'New Saved Board' : 'New Team Board'}
               className="p-0.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />

@@ -17,6 +17,7 @@ import { apiFetch, formatRelativeTime } from '../api';
 import { ArticleDetail, TeamBoard } from '../types';
 
 interface Props {
+  edition: 'personal' | 'enterprise';
   article: ArticleDetail | null;
   loading: boolean;
   boards: TeamBoard[];
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export const ArticleReader: React.FC<Props> = ({
+  edition,
   article,
   loading,
   boards,
@@ -33,6 +35,7 @@ export const ArticleReader: React.FC<Props> = ({
   onRefreshArticle,
   onStateChanged,
 }) => {
+  const isPersonal = edition === 'personal';
   const [serif, setSerif] = useState(true);
   const [sepia, setSepia] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
@@ -146,7 +149,7 @@ export const ArticleReader: React.FC<Props> = ({
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              Team Notes &amp; Highlights
+              {isPersonal ? 'Notes & Highlights' : 'Team Notes & Highlights'}
               {article && (article.highlights.length + article.notes.length > 0) && (
                 <span className="px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[10px]">
                   {article.highlights.length + article.notes.length}
@@ -190,7 +193,7 @@ export const ArticleReader: React.FC<Props> = ({
                 {showBoardsMenu && (
                   <div className="absolute right-0 mt-1.5 w-56 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl p-1.5 z-50">
                     <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Save to Team Board
+                      {isPersonal ? 'Save to Board' : 'Save to Team Board'}
                     </div>
                     {boards.map((b) => {
                       const saved = article.board_ids.includes(b.id);
@@ -423,7 +426,7 @@ export const ArticleReader: React.FC<Props> = ({
                   type="text"
                   value={noteInput}
                   onChange={(e) => setNoteInput(e.target.value)}
-                  placeholder="Add an enterprise team note or @mention..."
+                  placeholder={isPersonal ? 'Add a note about this article...' : 'Add an enterprise team note or @mention...'}
                   className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm"
                 />
                 <button
