@@ -39,6 +39,7 @@ Source: "..\backend\target\release\pulsefeed.exe"; DestDir: "{app}"; Flags: igno
 Source: "..\frontend\dist\*"; DestDir: "{app}\dist"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\pulsefeed.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\launch-app.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\launch-app.vbs"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\install-shortcuts.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\start-enterprise.bat"; DestDir: "{app}"; Flags: ignoreversion
@@ -51,8 +52,6 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "C:\Windows\System32\wscript.exe"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "C:\Windows\System32\wscript.exe"; Parameters: """{app}\launch-app.vbs"""; WorkingDir: "{app}"; IconFilename: "{app}\pulsefeed.ico"; Comment: "PulseFeed Personal RSS & Intelligence Reader"; Tasks: desktopicon
 
 [Run]
-; Generate local launch-app.vbs pointing to the chosen {app} directory
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""Set-Content -Path '{app}\launch-app.vbs' -Encoding ASCII -Value ('Set shell = CreateObject(""WScript.Shell"")' + [Environment]::NewLine + 'shell.Run ""powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """"{app}\launch-app.ps1"""""" , 0, False')"""; Flags: runhidden waituntilterminated
 Filename: "C:\Windows\System32\wscript.exe"; Parameters: """{app}\launch-app.vbs"""; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

@@ -11,12 +11,11 @@ backend/target/
 *.db-shm
 *.db-wal
 
-# Release staging / archives & generated local wrapper
+# Release staging / archives
 /release-staging/
 /dist-installer/
 *.zip
 *.exe
-launch-app.vbs
 
 # Android build artifacts
 /android/.gradle/

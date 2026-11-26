@@ -1,14 +1,17 @@
 $ErrorActionPreference = "SilentlyContinue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $icoPath = Join-Path $root "pulsefeed.ico"
-$launcherPs1 = Join-Path $root "launch-app.ps1"
 $launcherVbs = Join-Path $root "launch-app.vbs"
 
-# Always generate launch-app.vbs with the current install folder path so it works wherever extracted
-@"
+if (-not (Test-Path $launcherVbs)) {
+    @'
+Set fso = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
-shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""$launcherPs1""", 0, False
-"@ | Set-Content -Path $launcherVbs -Encoding ASCII
+dir = fso.GetParentFolderName(WScript.ScriptFullName)
+ps1 = dir & "\launch-app.ps1"
+shell.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File """ & ps1 & """", 0, False
+'@ | Set-Content -Path $launcherVbs -Encoding ASCII
+}
 
 $wsh = New-Object -ComObject WScript.Shell
 $desktopDir = [Environment]::GetFolderPath("Desktop")
