@@ -13,8 +13,16 @@ backend/target/
 
 # Release staging / archives & generated local wrapper
 /release-staging/
+/dist-installer/
 *.zip
+*.exe
 launch-app.vbs
+
+# Android build artifacts
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
 
 # OS / IDE
 .DS_Store

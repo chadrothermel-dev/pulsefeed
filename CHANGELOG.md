@@ -2,6 +2,19 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.2.0] - 2026-11-26
+
+### Added
+- **Windows Personal Edition Installer (`PulseFeed-Personal-Setup-v1.2.0.exe`):**
+  - Built with Inno Setup 6 (`installer/pulsefeed-personal.iss`).
+  - Interactive Windows Setup Wizard with optional **Create a desktop icon** and **Create a Start Menu shortcut** checkboxes, custom emerald icon, automatic silent launcher setup, and proper Windows Add/Remove Programs uninstaller.
+- **Native Android App (`android/`):**
+  - Built in Kotlin + Jetpack Compose (Material 3) with adaptive emerald RSS launcher icon.
+  - Connects to either your local **Personal Edition** PC (zero login) or hosted **Enterprise Edition** server (JWT login).
+  - Features Today, Leo AI Priority, Saved/Read Later, **Discover / Search by Topic** feed finder, full-text search, and native Reader with 1-click Leo AI summaries.
+- **Automated Android APK Builds (`.github/workflows/build-android.yml`):**
+  - GitHub Actions automatically compiles the Android APK and attaches `PulseFeed-Android-v1.2.0.apk` to GitHub Releases.
+
 ## [1.1.0] - 2026-11-26
 
 ### Added

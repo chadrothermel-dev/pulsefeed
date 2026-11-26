@@ -45,20 +45,23 @@ Switch editions anytime via `PULSEFEED_EDITION=personal` or `PULSEFEED_EDITION=e
 
 ---
 
-## Quick Download (Easy Windows Install — Personal Edition)
+## Quick Download (Windows Installer, Portable ZIP & Android APK)
 
-Want to run PulseFeed locally on Windows without installing Rust or Node.js?
+Want to run PulseFeed locally without installing Rust, Node.js, or Android Studio?
 
-1. **Download the latest pre-built ZIP:**
-   **[Download PulseFeed for Windows (x64 ZIP)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-windows-x64.zip)**
-   *(Or browse all releases on the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases).)*
-2. **Extract the ZIP** to any folder (for example, `C:\PulseFeed`).
-3. **Double-click `start.bat`** (Personal Edition — zero login!) or `start-enterprise.bat` (multi-user Enterprise Edition).
-   - This automatically creates **Desktop** and **Start Menu** shortcuts with the **PulseFeed** icon (which you can right-click → **Pin to taskbar**) and opens **http://127.0.0.1:8080**.
-   - Click **+ Follow** to search for RSS feeds by **topic or interest** (e.g., *cybersecurity*, *AI*, *gardening*, *NFL*, *finance*), browse categories, paste a URL, or import OPML.
-4. *(Enterprise Edition only)* Default admin login:
-   - **Email:** `admin@pulsefeed.local`
-   - **Password:** `admin123`
+### Option 1: Windows Personal Edition Installer (Recommended)
+1. **[Download PulseFeed Personal Setup (Windows .exe)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Personal-Setup-v1.2.0.exe)**
+2. Run the installer — choose your install folder and check **Create a desktop icon** (optional) and **Start Menu shortcut**.
+3. Click **Finish** to launch **PulseFeed Personal Edition** immediately with **zero login screen**!
+
+### Option 2: Portable Windows ZIP
+- **[Download PulseFeed Portable ZIP (Windows x64)](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/pulsefeed-windows-x64.zip)**
+- Extract anywhere and double-click `start.bat` (Personal Edition) or `start-enterprise.bat` (Enterprise Edition).
+
+### Option 3: Native Android App (Kotlin + Jetpack Compose)
+- **[Download PulseFeed Android APK](https://github.com/chadrothermel-dev/pulsefeed/releases/latest/download/PulseFeed-Android-v1.2.0.apk)** *(or check the [Releases page](https://github.com/chadrothermel-dev/pulsefeed/releases) / [Actions](https://github.com/chadrothermel-dev/pulsefeed/actions))*
+- Install the APK on your Android phone (Android 8.0+), enter your hosted PulseFeed URL (e.g., Render/Railway) or your PC's local LAN IP (`http://192.168.x.x:8080`), and start reading with **Leo AI**, **FTS5 Search**, and **Topic Feed Discovery**!
+- *(Enterprise Edition only)* Default admin login: `admin@pulsefeed.local` / `admin123`.
 
 > **Note:** On first launch, PulseFeed automatically creates `pulsefeed.db` in the same folder, seeds starter feeds/folders/boards/Leo rules, and begins syncing live articles within 2 seconds.
 
