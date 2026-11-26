@@ -256,6 +256,34 @@ export default function App() {
     loadSidebar();
   };
 
+  const handleDeleteFeed = async (feed: Feed) => {
+    if (!window.confirm(`Unfollow "${feed.title}" and remove its articles?`)) return;
+    await apiFetch(`/feeds/${feed.id}`, { method: 'DELETE' });
+    if (activeNav.kind === 'feed' && activeNav.feedId === feed.id) {
+      setActiveNav({ kind: 'view', view: 'today', label: 'Today' });
+    }
+    setReaderArticle(null);
+    await Promise.all([loadSidebar(), loadArticles()]);
+  };
+
+  const handleDeleteFolder = async (folder: Folder) => {
+    if (!window.confirm(`Delete folder "${folder.name}"? Feeds inside will move to Uncategorized.`)) return;
+    await apiFetch(`/folders/${folder.id}`, { method: 'DELETE' });
+    if (activeNav.kind === 'folder' && activeNav.folderId === folder.id) {
+      setActiveNav({ kind: 'view', view: 'today', label: 'Today' });
+    }
+    await Promise.all([loadSidebar(), loadArticles()]);
+  };
+
+  const handleDeleteBoard = async (board: TeamBoard) => {
+    if (!window.confirm(`Delete board "${board.name}"?`)) return;
+    await apiFetch(`/boards/${board.id}`, { method: 'DELETE' });
+    if (activeNav.kind === 'board' && activeNav.boardId === board.id) {
+      setActiveNav({ kind: 'view', view: 'today', label: 'Today' });
+    }
+    await Promise.all([loadSidebar(), loadArticles()]);
+  };
+
   // Feedly-style Keyboard Shortcuts (j, k, m, l, v, /, ?, Esc)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -308,6 +336,26 @@ export default function App() {
 
   const currentBoard =
     activeNav.kind === 'board' ? boards.find((b) => b.id === activeNav.boardId) : undefined;
+  const currentFeed =
+    activeNav.kind === 'feed' ? feeds.find((f) => f.id === activeNav.feedId) : undefined;
+  const currentFolder =
+    activeNav.kind === 'folder' ? folders.find((f) => f.id === activeNav.folderId) : undefined;
+
+  const deleteCurrentLabel = currentFeed
+    ? 'Unfollow Feed'
+    : currentBoard
+    ? 'Delete Board'
+    : currentFolder
+    ? 'Delete Folder'
+    : undefined;
+
+  const handleDeleteCurrent = currentFeed
+    ? () => handleDeleteFeed(currentFeed)
+    : currentBoard
+    ? () => handleDeleteBoard(currentBoard)
+    : currentFolder
+    ? () => handleDeleteFolder(currentFolder)
+    : undefined;
 
   const headerTitle =
     activeNav.kind === 'view' || activeNav.kind === 'folder' || activeNav.kind === 'feed' || activeNav.kind === 'board'
@@ -338,6 +386,9 @@ export default function App() {
         onOpenAddFeed={() => setShowAddFeed(true)}
         onOpenNewFolder={() => setShowNewFolder(true)}
         onOpenNewBoard={() => setShowNewBoard(true)}
+        onDeleteFeed={handleDeleteFeed}
+        onDeleteFolder={handleDeleteFolder}
+        onDeleteBoard={handleDeleteBoard}
         onOpenShortcuts={() => setShowShortcuts(true)}
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
@@ -378,6 +429,8 @@ export default function App() {
           onChangeLayout={setLayout}
           onRefresh={handleRefreshAll}
           onMarkAllRead={handleMarkAllRead}
+          deleteLabel={deleteCurrentLabel}
+          onDeleteCurrent={handleDeleteCurrent}
           onSelectArticle={openArticle}
           onToggleRead={handleToggleRead}
           onToggleReadLater={handleToggleReadLater}

@@ -21,6 +21,7 @@ import {
   LogOut,
   Moon,
   HelpCircle,
+  Trash2,
 } from 'lucide-react';
 import { ActiveNav, Feed, Folder, SidebarCounts, TeamBoard, User } from '../types';
 
@@ -36,6 +37,9 @@ interface Props {
   onOpenAddFeed: () => void;
   onOpenNewFolder: () => void;
   onOpenNewBoard: () => void;
+  onDeleteFeed: (feed: Feed) => void;
+  onDeleteFolder: (folder: Folder) => void;
+  onDeleteBoard: (board: TeamBoard) => void;
   onOpenShortcuts: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
@@ -54,6 +58,9 @@ export const Sidebar: React.FC<Props> = ({
   onOpenAddFeed,
   onOpenNewFolder,
   onOpenNewBoard,
+  onDeleteFeed,
+  onDeleteFolder,
+  onDeleteBoard,
   onOpenShortcuts,
   darkMode,
   onToggleDarkMode,
@@ -211,24 +218,32 @@ export const Sidebar: React.FC<Props> = ({
           </div>
           <div className="space-y-0.5">
             {boards.map((board) => (
-              <button
-                key={board.id}
-                onClick={() => onSelectNav({ kind: 'board', boardId: board.id, label: board.name })}
-                className={navBtnClass(isNavActive({ kind: 'board', boardId: board.id, label: board.name }))}
-              >
-                <span className="flex items-center gap-2.5 truncate">
-                  <Layers className="w-4 h-4 shrink-0" style={{ color: board.color }} />
-                  <span className="truncate">{board.name}</span>
-                  {board.visibility === 'public' ? (
-                    <Globe className="w-3 h-3 text-emerald-500 shrink-0" />
-                  ) : board.visibility === 'team' ? (
-                    <Users className="w-3 h-3 text-blue-400 shrink-0" />
-                  ) : (
-                    <Lock className="w-3 h-3 text-slate-400 shrink-0" />
-                  )}
-                </span>
-                <span className="text-xs text-slate-400 font-medium">{board.article_count}</span>
-              </button>
+              <div key={board.id} className="group flex items-center gap-0.5">
+                <button
+                  onClick={() => onSelectNav({ kind: 'board', boardId: board.id, label: board.name })}
+                  className={navBtnClass(isNavActive({ kind: 'board', boardId: board.id, label: board.name }))}
+                >
+                  <span className="flex items-center gap-2.5 truncate">
+                    <Layers className="w-4 h-4 shrink-0" style={{ color: board.color }} />
+                    <span className="truncate">{board.name}</span>
+                    {board.visibility === 'public' ? (
+                      <Globe className="w-3 h-3 text-emerald-500 shrink-0" />
+                    ) : board.visibility === 'team' ? (
+                      <Users className="w-3 h-3 text-blue-400 shrink-0" />
+                    ) : (
+                      <Lock className="w-3 h-3 text-slate-400 shrink-0" />
+                    )}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">{board.article_count}</span>
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDeleteBoard(board); }}
+                  title={`Delete board "${board.name}"`}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -254,61 +269,78 @@ export const Sidebar: React.FC<Props> = ({
               const isOpen = expandedFolders[folder.id] ?? true;
               return (
                 <div key={folder.id}>
-                  <button
-                    onClick={() => onSelectNav({ kind: 'folder', folderId: folder.id, label: folder.name })}
-                    className={navBtnClass(
-                      isNavActive({ kind: 'folder', folderId: folder.id, label: folder.name })
-                    )}
-                  >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span
-                        onClick={(e) => toggleFolder(folder.id, e)}
-                        className="p-0.5 rounded hover:bg-slate-300/50 dark:hover:bg-slate-700"
-                      >
-                        {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  <div className="group flex items-center gap-0.5">
+                    <button
+                      onClick={() => onSelectNav({ kind: 'folder', folderId: folder.id, label: folder.name })}
+                      className={navBtnClass(
+                        isNavActive({ kind: 'folder', folderId: folder.id, label: folder.name })
+                      )}
+                    >
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span
+                          onClick={(e) => toggleFolder(folder.id, e)}
+                          className="p-0.5 rounded hover:bg-slate-300/50 dark:hover:bg-slate-700"
+                        >
+                          {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                        </span>
+                        <FolderIcon className="w-4 h-4 shrink-0" style={{ color: folder.color }} />
+                        <span className="truncate">{folder.name}</span>
                       </span>
-                      <FolderIcon className="w-4 h-4 shrink-0" style={{ color: folder.color }} />
-                      <span className="truncate">{folder.name}</span>
-                    </span>
-                    {folder.unread_count > 0 && (
-                      <span className="text-xs text-slate-500 font-semibold">{folder.unread_count}</span>
-                    )}
-                  </button>
+                      {folder.unread_count > 0 && (
+                        <span className="text-xs text-slate-500 font-semibold">{folder.unread_count}</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder); }}
+                      title={`Delete folder "${folder.name}"`}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   {isOpen && folderFeeds.length > 0 && (
                     <div className="ml-5 pl-2 border-l border-slate-200 dark:border-slate-800 space-y-0.5 mt-0.5">
                       {folderFeeds.map((feed) => (
-                        <button
-                          key={feed.id}
-                          onClick={() => onSelectNav({ kind: 'feed', feedId: feed.id, label: feed.title })}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer ${
-                            isNavActive({ kind: 'feed', feedId: feed.id, label: feed.title })
-                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold'
-                              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/60'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 truncate">
-                            {feed.icon_url ? (
-                              <img
-                                src={feed.icon_url}
-                                alt=""
-                                className="w-3.5 h-3.5 rounded-sm shrink-0 object-cover"
-                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                              />
-                            ) : (
-                              <Rss className="w-3 h-3 text-slate-400 shrink-0" />
-                            )}
-                            <span className="truncate">{feed.title}</span>
-                            {feed.error_count > 0 && (
-                              <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
-                            )}
-                          </span>
-                          {feed.unread_count > 0 && (
-                            <span className="text-[11px] font-semibold text-slate-400 ml-1">
-                              {feed.unread_count}
+                        <div key={feed.id} className="group/feed flex items-center gap-0.5">
+                          <button
+                            onClick={() => onSelectNav({ kind: 'feed', feedId: feed.id, label: feed.title })}
+                            className={`flex-1 min-w-0 flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs transition cursor-pointer ${
+                              isNavActive({ kind: 'feed', feedId: feed.id, label: feed.title })
+                                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-semibold'
+                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/60'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2 truncate">
+                              {feed.icon_url ? (
+                                <img
+                                  src={feed.icon_url}
+                                  alt=""
+                                  className="w-3.5 h-3.5 rounded-sm shrink-0 object-cover"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                              ) : (
+                                <Rss className="w-3 h-3 text-slate-400 shrink-0" />
+                              )}
+                              <span className="truncate">{feed.title}</span>
+                              {feed.error_count > 0 && (
+                                <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                              )}
                             </span>
-                          )}
-                        </button>
+                            {feed.unread_count > 0 && (
+                              <span className="text-[11px] font-semibold text-slate-400 ml-1">
+                                {feed.unread_count}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onDeleteFeed(feed); }}
+                            title={`Unfollow "${feed.title}"`}
+                            className="opacity-0 group-hover/feed:opacity-100 p-1 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -317,19 +349,27 @@ export const Sidebar: React.FC<Props> = ({
             })}
 
             {uncategorizedFeeds.map((feed) => (
-              <button
-                key={feed.id}
-                onClick={() => onSelectNav({ kind: 'feed', feedId: feed.id, label: feed.title })}
-                className={navBtnClass(isNavActive({ kind: 'feed', feedId: feed.id, label: feed.title }))}
-              >
-                <span className="flex items-center gap-2 truncate">
-                  <Rss className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="truncate">{feed.title}</span>
-                </span>
-                {feed.unread_count > 0 && (
-                  <span className="text-xs text-slate-400 font-semibold">{feed.unread_count}</span>
-                )}
-              </button>
+              <div key={feed.id} className="group flex items-center gap-0.5">
+                <button
+                  onClick={() => onSelectNav({ kind: 'feed', feedId: feed.id, label: feed.title })}
+                  className={navBtnClass(isNavActive({ kind: 'feed', feedId: feed.id, label: feed.title }))}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <Rss className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{feed.title}</span>
+                  </span>
+                  {feed.unread_count > 0 && (
+                    <span className="text-xs text-slate-400 font-semibold">{feed.unread_count}</span>
+                  )}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onDeleteFeed(feed); }}
+                  title={`Unfollow "${feed.title}"`}
+                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition cursor-pointer shrink-0"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             ))}
           </div>
         </div>

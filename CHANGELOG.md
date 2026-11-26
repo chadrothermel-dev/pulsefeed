@@ -2,6 +2,14 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.2.1] - 2026-11-26
+
+### Added
+- **Remove / Unfollow Feeds, Folders, and Boards:** Added hover trash icons in the sidebar for every Feed, Folder, and Board, plus **Unfollow Feed**, **Delete Board**, and **Delete Folder** buttons in the top header bar with confirmation prompts.
+
+### Fixed
+- Replaced inline-generated `launch-app.vbs` with a clean, self-locating portable VBS launcher so the Windows Installer shortcut launches cleanly from any directory.
+
 ## [1.2.0] - 2026-11-26
 
 ### Added

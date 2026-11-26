@@ -15,6 +15,7 @@ import {
   Check,
   Layers,
   Filter,
+  Trash2,
 } from 'lucide-react';
 import { ArticleListItem, LayoutMode, TeamBoard } from '../types';
 import { formatRelativeTime } from '../api';
@@ -39,6 +40,8 @@ interface Props {
   onChangeLayout: (l: LayoutMode) => void;
   onRefresh: () => void;
   onMarkAllRead: () => void;
+  deleteLabel?: string;
+  onDeleteCurrent?: () => void;
   onSelectArticle: (id: string) => void;
   onToggleRead: (article: ArticleListItem, e: React.MouseEvent) => void;
   onToggleReadLater: (article: ArticleListItem, e: React.MouseEvent) => void;
@@ -64,6 +67,8 @@ export const ArticleList: React.FC<Props> = ({
   onChangeLayout,
   onRefresh,
   onMarkAllRead,
+  deleteLabel,
+  onDeleteCurrent,
   onSelectArticle,
   onToggleRead,
   onToggleReadLater,
@@ -89,6 +94,15 @@ export const ArticleList: React.FC<Props> = ({
               >
                 <Copy className="w-3 h-3" />
                 Public RSS
+              </button>
+            )}
+            {onDeleteCurrent && deleteLabel && (
+              <button
+                onClick={onDeleteCurrent}
+                className="text-xs px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-semibold flex items-center gap-1 hover:bg-red-100 dark:hover:bg-red-950/60 transition cursor-pointer shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                {deleteLabel}
               </button>
             )}
           </div>
