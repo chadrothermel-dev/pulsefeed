@@ -59,6 +59,9 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) 
   const [freshRawKey, setFreshRawKey] = useState<string | null>(null);
 
   const [llmApiKeyInput, setLlmApiKeyInput] = useState('');
+  const [googleSecretInput, setGoogleSecretInput] = useState('');
+  const [entraSecretInput, setEntraSecretInput] = useState('');
+  const [facebookSecretInput, setFacebookSecretInput] = useState('');
 
   const loadAll = async () => {
     const [tel, wh, keys] = await Promise.all([
@@ -160,10 +163,16 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) 
       body: JSON.stringify({
         ...settings,
         llm_api_key: llmApiKeyInput || undefined,
+        oauth_google_client_secret: googleSecretInput || undefined,
+        oauth_entra_client_secret: entraSecretInput || undefined,
+        oauth_facebook_client_secret: facebookSecretInput || undefined,
       }),
     });
     setLlmApiKeyInput('');
-    setBanner('Enterprise LLM, SSO & Engine settings saved.');
+    setGoogleSecretInput('');
+    setEntraSecretInput('');
+    setFacebookSecretInput('');
+    setBanner(isPersonal ? 'Settings saved.' : 'Identity Providers, LLM & Engine settings saved.');
     loadAll();
   };
 
@@ -550,42 +559,136 @@ export const EnterpriseAdminPanel: React.FC<Props> = ({ edition, currentUser }) 
             </div>
 
             {!isPersonal && (
-              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
-                <div className="flex items-center justify-between">
+              <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+                <div>
                   <h3 className="font-bold text-slate-900 dark:text-white">
-                    Enterprise SSO / OIDC Configuration
+                    Identity Providers (Google, Microsoft Entra ID &amp; Facebook)
                   </h3>
-                  <label className="flex items-center gap-2 text-xs font-semibold">
-                    <input
-                      type="checkbox"
-                      checked={settings.sso_enabled}
-                      onChange={(e) => setSettings({ ...settings, sso_enabled: e.target.checked })}
-                    />
-                    Enable SSO Button
-                  </label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Enable OAuth 2.0 / OIDC sign-in with automatic Just-In-Time (JIT) user provisioning.
+                  </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1">
+                    Public App Base URL (used to build OAuth Callback URIs)
+                  </label>
                   <input
-                    type="text"
-                    value={settings.sso_provider_name}
-                    onChange={(e) => setSettings({ ...settings, sso_provider_name: e.target.value })}
-                    placeholder="Microsoft Entra ID / Okta"
-                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                    type="url"
+                    value={settings.app_base_url}
+                    onChange={(e) => setSettings({ ...settings, app_base_url: e.target.value })}
+                    placeholder={window.location.origin}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
                   />
-                  <input
-                    type="text"
-                    value={settings.sso_issuer_url}
-                    onChange={(e) => setSettings({ ...settings, sso_issuer_url: e.target.value })}
-                    placeholder="https://login.microsoftonline.com/.../v2.0"
-                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
-                  />
-                  <input
-                    type="text"
-                    value={settings.sso_client_id}
-                    onChange={(e) => setSettings({ ...settings, sso_client_id: e.target.value })}
-                    placeholder="OIDC Client ID"
-                    className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
-                  />
+                </div>
+
+                {/* Google OAuth */}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Google (OAuth 2.0 / OIDC)</span>
+                    <label className="flex items-center gap-2 text-xs font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={settings.oauth_google_enabled}
+                        onChange={(e) => setSettings({ ...settings, oauth_google_enabled: e.target.checked })}
+                      />
+                      Enabled
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={settings.oauth_google_client_id}
+                      onChange={(e) => setSettings({ ...settings, oauth_google_client_id: e.target.value })}
+                      placeholder="Google Client ID"
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                    <input
+                      type="password"
+                      value={googleSecretInput}
+                      onChange={(e) => setGoogleSecretInput(e.target.value)}
+                      placeholder={settings.oauth_google_secret_set ? 'Client Secret (Set — enter to update)' : 'Google Client Secret'}
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 break-all">
+                    Callback URI: {(settings.app_base_url || window.location.origin).replace(/\/$/, '')}/api/auth/oauth/google/callback
+                  </div>
+                </div>
+
+                {/* Microsoft Entra ID */}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Microsoft Entra ID (Azure AD)</span>
+                    <label className="flex items-center gap-2 text-xs font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={settings.oauth_entra_enabled}
+                        onChange={(e) => setSettings({ ...settings, oauth_entra_enabled: e.target.checked })}
+                      />
+                      Enabled
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <input
+                      type="text"
+                      value={settings.oauth_entra_tenant_id}
+                      onChange={(e) => setSettings({ ...settings, oauth_entra_tenant_id: e.target.value })}
+                      placeholder="Tenant ID (or 'common')"
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                    <input
+                      type="text"
+                      value={settings.oauth_entra_client_id}
+                      onChange={(e) => setSettings({ ...settings, oauth_entra_client_id: e.target.value })}
+                      placeholder="Application (Client) ID"
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                    <input
+                      type="password"
+                      value={entraSecretInput}
+                      onChange={(e) => setEntraSecretInput(e.target.value)}
+                      placeholder={settings.oauth_entra_secret_set ? 'Client Secret (Set — enter to update)' : 'Client Secret Value'}
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 break-all">
+                    Callback URI: {(settings.app_base_url || window.location.origin).replace(/\/$/, '')}/api/auth/oauth/entra/callback
+                  </div>
+                </div>
+
+                {/* Facebook OAuth */}
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-slate-900 dark:text-white">Facebook Login (Meta OAuth 2.0)</span>
+                    <label className="flex items-center gap-2 text-xs font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={settings.oauth_facebook_enabled}
+                        onChange={(e) => setSettings({ ...settings, oauth_facebook_enabled: e.target.checked })}
+                      />
+                      Enabled
+                    </label>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={settings.oauth_facebook_client_id}
+                      onChange={(e) => setSettings({ ...settings, oauth_facebook_client_id: e.target.value })}
+                      placeholder="Facebook App ID"
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                    <input
+                      type="password"
+                      value={facebookSecretInput}
+                      onChange={(e) => setFacebookSecretInput(e.target.value)}
+                      placeholder={settings.oauth_facebook_secret_set ? 'App Secret (Set — enter to update)' : 'Facebook App Secret'}
+                      className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                    />
+                  </div>
+                  <div className="text-[11px] font-mono text-slate-500 break-all">
+                    Callback URI: {(settings.app_base_url || window.location.origin).replace(/\/$/, '')}/api/auth/oauth/facebook/callback
+                  </div>
                 </div>
               </div>
             )}

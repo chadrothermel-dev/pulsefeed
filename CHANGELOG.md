@@ -2,6 +2,19 @@
 
 All notable changes to **PulseFeed** will be documented in this file.
 
+## [1.4.0] - 2026-11-27
+
+### Added
+- **OAuth 2.0 / OIDC Identity Providers (Enterprise Edition):**
+  - Full Authorization Code Flow + Just-In-Time (JIT) user provisioning for **Google**, **Microsoft Entra ID**, and **Facebook**.
+  - Dedicated configuration cards in **Enterprise Console → LLM & SSO** with enable toggles, Client ID/Secret/Tenant ID fields, Public App Base URL, and copyable Callback URIs.
+  - Branded **Continue with Google / Microsoft Entra ID / Facebook** sign-in buttons on the Enterprise login screen.
+- **Redesigned Android UI Matching the Web App (`PulseFeed-Android-v1.4.0.apk`):**
+  - Feedly-style slide-out **Sidebar Navigation Drawer** with brand badge, `+ Follow` button, unread count pills, subscribed feeds list with 1-tap unfollow, and Dark/Light theme toggle.
+  - Web-matched **Magazine Cards** (inline Bookmark, Mark Read, and Open External buttons) + **Compact Title-Only** view toggle, **Unread** filter chip, **Sort by Leo Priority**, and **Mark All Read**.
+  - Upgraded **Reader Mode** with **Sepia**, **Serif / Sans** typography toggle, and violet **Leo Intelligence Brief** card with Sentiment pill.
+  - Upgraded **Discover** screen with Topic Search + Direct RSS URL input.
+
 ## [1.3.0] - 2026-11-26
 
 ### Added

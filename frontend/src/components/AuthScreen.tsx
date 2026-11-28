@@ -14,11 +14,17 @@ export const AuthScreen: React.FC<Props> = ({ onSuccess }) => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [ssoInfo, setSsoInfo] = useState<{ sso_enabled: boolean; provider_name?: string }>({ sso_enabled: false });
+  const [providers, setProviders] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
-    apiFetch<{ sso_enabled: boolean; provider_name?: string }>('/auth/sso/config')
-      .then(setSsoInfo)
+    const params = new URLSearchParams(window.location.search);
+    const oauthErr = params.get('oauth_error');
+    if (oauthErr) {
+      setError(oauthErr);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    apiFetch<{ providers: { id: string; name: string }[] }>('/auth/providers')
+      .then((res) => setProviders(res.providers || []))
       .catch(() => {});
   }, []);
 
@@ -153,16 +159,32 @@ export const AuthScreen: React.FC<Props> = ({ onSuccess }) => {
             </button>
           </form>
 
-          {ssoInfo.sso_enabled && (
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
-              <button
-                type="button"
-                onClick={() => setError(`SSO (${ssoInfo.provider_name}) is configured. Connect your IdP redirect URI in production.`)}
-                className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-medium flex items-center justify-center gap-2 transition cursor-pointer"
-              >
-                <ShieldCheck className="w-4 h-4 text-emerald-500" />
-                Continue with {ssoInfo.provider_name || 'Enterprise SSO'}
-              </button>
+          {providers.length > 0 && (
+            <div className="mt-5 pt-5 border-t border-slate-200 dark:border-slate-800 space-y-2.5">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-center text-slate-400 mb-2">
+                Or continue with Identity Provider
+              </div>
+              {providers.map((p) => {
+                const badgeColor =
+                  p.id === 'google'
+                    ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                    : p.id === 'entra'
+                    ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
+                    : 'bg-blue-600/15 text-blue-600 dark:text-blue-400';
+                const monogram = p.id === 'google' ? 'G' : p.id === 'entra' ? 'M' : 'f';
+                return (
+                  <a
+                    key={p.id}
+                    href={`/api/auth/oauth/${p.id}/start`}
+                    className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-semibold flex items-center justify-center gap-2.5 transition"
+                  >
+                    <span className={`w-5 h-5 rounded-md text-xs font-extrabold flex items-center justify-center ${badgeColor}`}>
+                      {monogram}
+                    </span>
+                    Continue with {p.name}
+                  </a>
+                );
+              })}
             </div>
           )}
 

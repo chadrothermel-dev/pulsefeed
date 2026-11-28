@@ -1,6 +1,6 @@
 ; PulseFeed Personal Edition — Windows Installer Script (Inno Setup 6)
 #define MyAppName "PulseFeed"
-#define MyAppVersion "1.2.2"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "PulseFeed"
 #define MyAppURL "https://github.com/chadrothermel-dev/pulsefeed"
 #define MyAppExeName "pulsefeed.exe"

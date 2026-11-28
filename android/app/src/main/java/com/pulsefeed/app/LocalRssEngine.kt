@@ -302,7 +302,13 @@ class LocalPulseFeedEngine(context: Context) {
         return added
     }
 
-    fun getArticles(view: String, query: String = ""): List<ArticleItem> {
+    fun getArticles(
+        view: String,
+        query: String = "",
+        unreadOnly: Boolean = false,
+        sort: String = "newest",
+        feedId: String? = null
+    ): List<ArticleItem> {
         val wheres = mutableListOf("is_muted = 0")
         val args = mutableListOf<String>()
 
@@ -310,14 +316,25 @@ class LocalPulseFeedEngine(context: Context) {
             "leo_priority" -> wheres.add("priority_score >= 65")
             "read_later" -> wheres.add("is_read_later = 1")
         }
+        if (!feedId.isNullOrBlank()) {
+            wheres.add("feed_id = ?")
+            args.add(feedId)
+        }
+        if (unreadOnly) {
+            wheres.add("is_read = 0")
+        }
         if (query.isNotBlank()) {
             wheres.add("(lower(title) LIKE ? OR lower(content_text) LIKE ? OR lower(feed_title) LIKE ?)")
             val pat = "%${query.trim().lowercase(Locale.US)}%"
             args.add(pat); args.add(pat); args.add(pat)
         }
 
-        val order = if (view == "leo_priority") "priority_score DESC, published_at DESC" else "published_at DESC"
-        val sql = "SELECT id, feed_title, title, url, summary, published_at, reading_time_mins, priority_score, is_read, is_read_later, ai_summary, ai_sentiment FROM articles WHERE ${wheres.joinToString(" AND ")} ORDER BY $order LIMIT 60"
+        val order = if (sort == "priority" || view == "leo_priority") {
+            "priority_score DESC, published_at DESC"
+        } else {
+            "published_at DESC"
+        }
+        val sql = "SELECT id, feed_title, title, url, summary, published_at, reading_time_mins, priority_score, is_read, is_read_later, ai_summary, ai_sentiment FROM articles WHERE ${wheres.joinToString(" AND ")} ORDER BY $order LIMIT 80"
 
         val out = mutableListOf<ArticleItem>()
         dbHelper.readableDatabase.rawQuery(sql, args.toTypedArray()).use { c ->
@@ -341,6 +358,24 @@ class LocalPulseFeedEngine(context: Context) {
             }
         }
         return out
+    }
+
+    fun markAllRead(feedId: String? = null) {
+        val cv = ContentValues().apply { put("is_read", 1) }
+        if (feedId.isNullOrBlank()) {
+            dbHelper.writableDatabase.update("articles", cv, null, null)
+        } else {
+            dbHelper.writableDatabase.update("articles", cv, "feed_id = ?", arrayOf(feedId))
+        }
+    }
+
+    fun getCounts(): Triple<Int, Int, Int> {
+        val db = dbHelper.readableDatabase
+        fun count(sql: String): Int = db.rawQuery(sql, null).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+        val allUnread = count("SELECT COUNT(*) FROM articles WHERE is_muted = 0 AND is_read = 0")
+        val leoUnread = count("SELECT COUNT(*) FROM articles WHERE is_muted = 0 AND priority_score >= 65 AND is_read = 0")
+        val saved = count("SELECT COUNT(*) FROM articles WHERE is_read_later = 1")
+        return Triple(allUnread, leoUnread, saved)
     }
 
     fun getArticle(id: String): ArticleDetailResp? {

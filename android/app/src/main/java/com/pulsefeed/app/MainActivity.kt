@@ -6,6 +6,8 @@ import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -23,34 +25,64 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 
 private val Emerald = Color(0xFF10B981)
 private val EmeraldDark = Color(0xFF059669)
 private val Violet = Color(0xFF8B5CF6)
+private val BlueAccent = Color(0xFF3B82F6)
+private val AmberAccent = Color(0xFFF59E0B)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
+            val prefs = remember { getSharedPreferences("pulsefeed_prefs", Context.MODE_PRIVATE) }
+            var darkTheme by remember { mutableStateOf(prefs.getBoolean("dark_theme", true)) }
+
+            val scheme = if (darkTheme) {
+                darkColorScheme(
                     primary = Emerald,
                     secondary = Violet,
                     background = Color(0xFF020617),
                     surface = Color(0xFF0F172A),
                     surfaceVariant = Color(0xFF1E293B),
+                    outline = Color(0xFF1E293B),
                     onPrimary = Color.White,
                     onBackground = Color(0xFFF8FAFC),
-                    onSurface = Color(0xFFF8FAFC)
+                    onSurface = Color(0xFFF8FAFC),
+                    onSurfaceVariant = Color(0xFF94A3B8)
                 )
-            ) {
+            } else {
+                lightColorScheme(
+                    primary = EmeraldDark,
+                    secondary = Violet,
+                    background = Color(0xFFFFFFFF),
+                    surface = Color(0xFFF8FAFC),
+                    surfaceVariant = Color(0xFFF1F5F9),
+                    outline = Color(0xFFE2E8F0),
+                    onPrimary = Color.White,
+                    onBackground = Color(0xFF0F172A),
+                    onSurface = Color(0xFF0F172A),
+                    onSurfaceVariant = Color(0xFF64748B)
+                )
+            }
+
+            MaterialTheme(colorScheme = scheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    PulseFeedRoot()
+                    PulseFeedRoot(
+                        darkTheme = darkTheme,
+                        onToggleTheme = {
+                            darkTheme = !darkTheme
+                            prefs.edit().putBoolean("dark_theme", darkTheme).apply()
+                        }
+                    )
                 }
             }
         }
@@ -58,12 +90,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PulseFeedRoot() {
+fun PulseFeedRoot(darkTheme: Boolean, onToggleTheme: () -> Unit) {
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("pulsefeed_prefs", Context.MODE_PRIVATE) }
     val localEngine = remember { LocalPulseFeedEngine(context) }
 
-    // Default to 100% standalone on-device local mode (no server required!)
     var mode by remember { mutableStateOf(prefs.getString("mode", "local") ?: "local") }
     var serverUrl by remember { mutableStateOf(prefs.getString("server_url", "") ?: "") }
     var token by remember { mutableStateOf(prefs.getString("jwt_token", "") ?: "") }
@@ -71,7 +102,7 @@ fun PulseFeedRoot() {
 
     if (showServerSetup) {
         ConnectScreen(
-            initialUrl = serverUrl.ifBlank { "https://your-server.onrender.com" },
+            initialUrl = serverUrl.ifBlank { "http://35.211.206.254" },
             onUseLocal = {
                 mode = "local"
                 prefs.edit().putString("mode", "local").apply()
@@ -96,7 +127,8 @@ fun PulseFeedRoot() {
         MainWorkspace(
             localEngine = localEngine,
             remoteApi = remoteApi,
-            modeLabel = if (remoteApi == null) "Personal • On-Device Local" else "Remote • $serverUrl",
+            darkTheme = darkTheme,
+            onToggleTheme = onToggleTheme,
             onOpenServerSettings = { showServerSetup = true }
         )
     }
@@ -132,36 +164,38 @@ fun ConnectScreen(
                 Icon(Icons.Default.RssFeed, contentDescription = null, tint = Color.White, modifier = Modifier.size(34.dp))
             }
         }
-        Spacer(Modifier.height(16.dp))
-        Text("PulseFeed Mode", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(14.dp))
+        Text("PulseFeed", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(
-            "Run 100% locally on your phone or connect to a hosted Enterprise server",
+            "Standalone Local Mode or Hosted Enterprise Server",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF94A3B8)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(22.dp))
 
         Button(
             onClick = onUseLocal,
             modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(14.dp)
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark)
         ) {
             Icon(Icons.Default.PhoneAndroid, null)
             Spacer(Modifier.width(8.dp))
-            Text("Use Standalone Local Mode (No Server)")
+            Text("Use Personal Local Mode (No Server)", fontWeight = FontWeight.SemiBold)
         }
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(22.dp))
         HorizontalDivider()
         Spacer(Modifier.height(16.dp))
-        Text("Or Connect to Remote Server", style = MaterialTheme.typography.labelLarge, color = Color(0xFF94A3B8))
+        Text("Or Connect to Remote Enterprise Server", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(10.dp))
 
         OutlinedTextField(
             value = url,
             onValueChange = { url = it },
-            label = { Text("PulseFeed Server URL") },
+            label = { Text("Server URL") },
             singleLine = true,
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -172,6 +206,7 @@ fun ConnectScreen(
                 onValueChange = { email = it },
                 label = { Text("Work Email") },
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(8.dp))
@@ -181,13 +216,14 @@ fun ConnectScreen(
                 label = { Text("Password") },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
         }
 
         if (error != null) {
             Spacer(Modifier.height(10.dp))
-            Text(error!!, color = Color(0xFFF87171), style = MaterialTheme.typography.bodySmall)
+            Text(error!!, color = Color(0xFFEF4444), style = MaterialTheme.typography.bodySmall)
         }
 
         Spacer(Modifier.height(14.dp))
@@ -228,32 +264,43 @@ fun ConnectScreen(
 fun MainWorkspace(
     localEngine: LocalPulseFeedEngine,
     remoteApi: PulseFeedApi?,
-    modeLabel: String,
+    darkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     onOpenServerSettings: () -> Unit
 ) {
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var activeTab by remember { mutableIntStateOf(0) } // 0=Today, 1=Leo, 2=Saved, 3=Discover, 4=Feeds
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    var activeView by remember { mutableStateOf("today") } // today | leo_priority | all | read_later | discover
+    var activeFeedId by remember { mutableStateOf<String?>(null) }
+    var activeTitle by remember { mutableStateOf("Today") }
+
     var searchQuery by remember { mutableStateOf("") }
+    var unreadOnly by remember { mutableStateOf(false) }
+    var sortBy by remember { mutableStateOf("newest") } // newest | priority
+    var compactTitleView by remember { mutableStateOf(false) }
+
     var articles by remember { mutableStateOf<List<ArticleItem>>(emptyList()) }
+    var localFeeds by remember { mutableStateOf<List<LocalFeed>>(emptyList()) }
+    var counts by remember { mutableStateOf(Triple(0, 0, 0)) }
     var loading by remember { mutableStateOf(false) }
     var selectedArticleId by remember { mutableStateOf<String?>(null) }
     var didInitialSync by remember { mutableStateOf(false) }
 
-    val viewName = when (activeTab) {
-        0 -> "today"
-        1 -> "leo_priority"
-        else -> "read_later"
-    }
-
-    fun loadArticles() {
-        if (activeTab >= 3) return
+    fun refreshState() {
+        if (remoteApi == null) {
+            localFeeds = localEngine.listFeeds()
+            counts = localEngine.getCounts()
+        }
+        if (activeView == "discover") return
         scope.launch {
             loading = true
             try {
                 articles = if (remoteApi != null) {
-                    remoteApi.getArticles(viewName, searchQuery)
+                    remoteApi.getArticles(activeView, searchQuery)
                 } else {
-                    localEngine.getArticles(viewName, searchQuery)
+                    localEngine.getArticles(activeView, searchQuery, unreadOnly, sortBy, activeFeedId)
                 }
             } catch (_: Exception) {
             } finally {
@@ -262,22 +309,20 @@ fun MainWorkspace(
         }
     }
 
-    // On first launch in local mode, automatically fetch all starter RSS feeds right on the device!
     LaunchedEffect(remoteApi) {
         if (remoteApi == null && !didInitialSync) {
             didInitialSync = true
-            val existing = localEngine.getArticles("today")
-            if (existing.isEmpty()) {
+            if (localEngine.getArticles("today").isEmpty()) {
                 loading = true
                 localEngine.refreshAll()
                 loading = false
             }
-            loadArticles()
+            refreshState()
         }
     }
 
-    LaunchedEffect(activeTab, searchQuery, remoteApi) {
-        loadArticles()
+    LaunchedEffect(activeView, activeFeedId, searchQuery, unreadOnly, sortBy, remoteApi) {
+        refreshState()
     }
 
     if (selectedArticleId != null) {
@@ -287,173 +332,477 @@ fun MainWorkspace(
             articleId = selectedArticleId!!,
             onBack = {
                 selectedArticleId = null
-                loadArticles()
+                refreshState()
             }
         )
         return
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("PulseFeed", fontWeight = FontWeight.Bold)
-                        Text(
-                            modeLabel,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Emerald,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            loading = true
-                            try {
-                                if (remoteApi != null) remoteApi.refreshAll()
-                                else localEngine.refreshAll()
-                            } catch (_: Exception) {}
-                            loadArticles()
+    // Feedly-style Sidebar Navigation Drawer matching Web App
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerContainerColor = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.width(300.dp)
+            ) {
+                // Brand Header (mirrors Web Sidebar)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = EmeraldDark,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.size(34.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.RssFeed, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
                         }
-                    }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh Feeds")
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text("PulseFeed", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Text(
+                                if (remoteApi == null) "PERSONAL LOCAL" else "ENTERPRISE",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Emerald
+                            )
+                        }
                     }
-                    IconButton(onClick = onOpenServerSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Mode / Server Settings")
+                    Button(
+                        onClick = {
+                            activeView = "discover"
+                            activeFeedId = null
+                            activeTitle = "Discover & Follow"
+                            scope.launch { drawerState.close() }
+                        },
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Icon(Icons.Default.Add, null, modifier = Modifier.size(14.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("Follow", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
-            )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = activeTab == 0,
-                    onClick = { activeTab = 0 },
-                    icon = { Icon(Icons.Default.WbSunny, null) },
-                    label = { Text("Today") }
-                )
-                NavigationBarItem(
-                    selected = activeTab == 1,
-                    onClick = { activeTab = 1 },
-                    icon = { Icon(Icons.Default.AutoAwesome, null) },
-                    label = { Text("Leo AI") }
-                )
-                NavigationBarItem(
-                    selected = activeTab == 2,
-                    onClick = { activeTab = 2 },
-                    icon = { Icon(Icons.Default.Bookmark, null) },
-                    label = { Text("Saved") }
-                )
-                NavigationBarItem(
-                    selected = activeTab == 3,
-                    onClick = { activeTab = 3 },
-                    icon = { Icon(Icons.Default.Explore, null) },
-                    label = { Text("Discover") }
-                )
-                if (remoteApi == null) {
-                    NavigationBarItem(
-                        selected = activeTab == 4,
-                        onClick = { activeTab = 4 },
-                        icon = { Icon(Icons.Default.RssFeed, null) },
-                        label = { Text("Feeds") }
-                    )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f).padding(horizontal = 10.dp, vertical = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    item {
+                        DrawerItem(
+                            label = "Today",
+                            icon = Icons.Default.WbSunny,
+                            iconTint = AmberAccent,
+                            badge = counts.first.takeIf { it > 0 && remoteApi == null },
+                            selected = activeView == "today" && activeFeedId == null
+                        ) {
+                            activeView = "today"; activeFeedId = null; activeTitle = "Today"
+                            scope.launch { drawerState.close() }
+                        }
+                        DrawerItem(
+                            label = "Leo Priority",
+                            icon = Icons.Default.AutoAwesome,
+                            iconTint = Violet,
+                            badge = counts.second.takeIf { it > 0 && remoteApi == null },
+                            selected = activeView == "leo_priority" && activeFeedId == null
+                        ) {
+                            activeView = "leo_priority"; activeFeedId = null; activeTitle = "Leo Priority"
+                            scope.launch { drawerState.close() }
+                        }
+                        DrawerItem(
+                            label = "All Articles",
+                            icon = Icons.Default.Inbox,
+                            iconTint = Emerald,
+                            badge = counts.first.takeIf { it > 0 && remoteApi == null },
+                            selected = activeView == "all" && activeFeedId == null
+                        ) {
+                            activeView = "all"; activeFeedId = null; activeTitle = "All Articles"
+                            scope.launch { drawerState.close() }
+                        }
+                        DrawerItem(
+                            label = "Read Later",
+                            icon = Icons.Default.Bookmark,
+                            iconTint = BlueAccent,
+                            badge = counts.third.takeIf { it > 0 && remoteApi == null },
+                            selected = activeView == "read_later" && activeFeedId == null
+                        ) {
+                            activeView = "read_later"; activeFeedId = null; activeTitle = "Read Later"
+                            scope.launch { drawerState.close() }
+                        }
+                    }
+
+                    if (remoteApi == null && localFeeds.isNotEmpty()) {
+                        item {
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "FEEDS (${localFeeds.size})",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                            )
+                        }
+                        items(localFeeds, key = { it.id }) { feed ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        if (activeFeedId == feed.id) Emerald.copy(alpha = 0.14f) else Color.Transparent,
+                                        RoundedCornerShape(10.dp)
+                                    )
+                                    .clickable {
+                                        activeView = "all"
+                                        activeFeedId = feed.id
+                                        activeTitle = feed.title
+                                        scope.launch { drawerState.close() }
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.RssFeed, null, tint = Emerald, modifier = Modifier.size(15.dp))
+                                Spacer(Modifier.width(10.dp))
+                                Text(
+                                    feed.title,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (activeFeedId == feed.id) FontWeight.Bold else FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(
+                                    onClick = {
+                                        localEngine.deleteFeed(feed.id)
+                                        if (activeFeedId == feed.id) {
+                                            activeFeedId = null
+                                            activeTitle = "Today"
+                                        }
+                                        refreshState()
+                                    },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.DeleteOutline,
+                                        contentDescription = "Unfollow",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Drawer Footer (Theme + Server Mode)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = {
+                        scope.launch { drawerState.close() }
+                        onOpenServerSettings()
+                    }) {
+                        Icon(Icons.Default.Settings, null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (remoteApi == null) "Local Mode" else "Remote Mode", fontSize = 12.sp)
+                    }
+                    IconButton(onClick = onToggleTheme) {
+                        Icon(if (darkTheme) Icons.Default.LightMode else Icons.Default.DarkMode, "Toggle Theme")
+                    }
                 }
             }
         }
-    ) { padding ->
-        when (activeTab) {
-            3 -> DiscoverFeedsScreen(
-                localEngine = localEngine,
-                remoteApi = remoteApi,
-                modifier = Modifier.padding(padding)
-            )
-            4 -> ManageLocalFeedsScreen(
-                localEngine = localEngine,
-                modifier = Modifier.padding(padding)
-            )
-            else -> Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Search articles...") },
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-
-                if (loading && articles.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator()
-                            Spacer(Modifier.height(10.dp))
-                            Text("Syncing live RSS feeds...", color = Color(0xFF94A3B8), style = MaterialTheme.typography.bodySmall)
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Open Sidebar")
+                        }
+                    },
+                    title = {
+                        Text(activeTitle, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    },
+                    actions = {
+                        if (activeView != "discover") {
+                            IconButton(onClick = { compactTitleView = !compactTitleView }) {
+                                Icon(
+                                    if (compactTitleView) Icons.Default.ViewAgenda else Icons.Default.ViewHeadline,
+                                    contentDescription = "Toggle Magazine / Compact View"
+                                )
+                            }
+                            if (remoteApi == null) {
+                                IconButton(onClick = {
+                                    localEngine.markAllRead(activeFeedId)
+                                    refreshState()
+                                }) {
+                                    Icon(Icons.Default.DoneAll, contentDescription = "Mark All Read")
+                                }
+                            }
+                            IconButton(onClick = {
+                                scope.launch {
+                                    loading = true
+                                    try {
+                                        if (remoteApi != null) remoteApi.refreshAll()
+                                        else localEngine.refreshAll()
+                                    } catch (_: Exception) {}
+                                    refreshState()
+                                }
+                            }) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                            }
                         }
                     }
-                } else if (articles.isEmpty()) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("All caught up! Tap Refresh or Discover to add feeds.", color = Color(0xFF94A3B8))
-                    }
-                } else {
-                    LazyColumn(
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                )
+            },
+            bottomBar = {
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                    NavigationBarItem(
+                        selected = activeView == "today" && activeFeedId == null,
+                        onClick = { activeView = "today"; activeFeedId = null; activeTitle = "Today" },
+                        icon = { Icon(Icons.Default.WbSunny, null) },
+                        label = { Text("Today") }
+                    )
+                    NavigationBarItem(
+                        selected = activeView == "leo_priority",
+                        onClick = { activeView = "leo_priority"; activeFeedId = null; activeTitle = "Leo Priority" },
+                        icon = { Icon(Icons.Default.AutoAwesome, null) },
+                        label = { Text("Leo AI") }
+                    )
+                    NavigationBarItem(
+                        selected = activeView == "read_later",
+                        onClick = { activeView = "read_later"; activeFeedId = null; activeTitle = "Saved" },
+                        icon = { Icon(Icons.Default.Bookmark, null) },
+                        label = { Text("Saved") }
+                    )
+                    NavigationBarItem(
+                        selected = activeView == "discover",
+                        onClick = { activeView = "discover"; activeFeedId = null; activeTitle = "Discover & Follow" },
+                        icon = { Icon(Icons.Default.Explore, null) },
+                        label = { Text("Discover") }
+                    )
+                }
+            }
+        ) { padding ->
+            if (activeView == "discover") {
+                DiscoverFeedsScreen(
+                    localEngine = localEngine,
+                    remoteApi = remoteApi,
+                    onSubscribed = { refreshState() },
+                    modifier = Modifier.padding(padding)
+                )
+            } else {
+                Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    // Search + Filter Row (mirrors Web App Toolbar)
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        placeholder = { Text("Search articles...") },
+                        leadingIcon = { Icon(Icons.Default.Search, null, modifier = Modifier.size(18.dp)) },
+                        singleLine = true,
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(articles, key = { it.id }) { art ->
-                            Card(
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { selectedArticleId = art.id }
-                            ) {
-                                Column(Modifier.padding(14.dp)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        modifier = Modifier.fillMaxWidth()
+                        FilterChip(
+                            selected = unreadOnly,
+                            onClick = { unreadOnly = !unreadOnly },
+                            label = { Text("Unread", fontSize = 12.sp) }
+                        )
+                        FilterChip(
+                            selected = sortBy == "priority",
+                            onClick = { sortBy = if (sortBy == "priority") "newest" else "priority" },
+                            label = { Text(if (sortBy == "priority") "Sort: Leo Priority" else "Sort: Newest", fontSize = 12.sp) }
+                        )
+                    }
+
+                    if (loading && articles.isEmpty()) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(color = Emerald)
+                                Spacer(Modifier.height(10.dp))
+                                Text("Syncing live RSS feeds...", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+                            }
+                        }
+                    } else if (articles.isEmpty()) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("All caught up!", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(if (compactTitleView) 6.dp else 12.dp)
+                        ) {
+                            items(articles, key = { it.id }) { art ->
+                                if (compactTitleView) {
+                                    // Web-matched Title-Only Compact Row
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.surface,
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                        modifier = Modifier.fillMaxWidth().clickable { selectedArticleId = art.id }
                                     ) {
-                                        Text(
-                                            art.feedTitle,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = Emerald,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f)
-                                        )
-                                        if (art.priorityScore >= 65) {
-                                            Surface(
-                                                color = Violet.copy(alpha = 0.2f),
-                                                shape = RoundedCornerShape(8.dp)
-                                            ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            if (art.priorityScore >= 65) {
+                                                Surface(
+                                                    color = Violet.copy(alpha = 0.16f),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                ) {
+                                                    Text(
+                                                        "${art.priorityScore}",
+                                                        color = Violet,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                                Spacer(Modifier.width(8.dp))
+                                            }
+                                            Column(Modifier.weight(1f)) {
                                                 Text(
-                                                    "Leo ${art.priorityScore}",
-                                                    style = MaterialTheme.typography.labelSmall,
-                                                    color = Violet,
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    art.title,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = if (art.isRead) FontWeight.Normal else FontWeight.SemiBold,
+                                                    color = if (art.isRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
+                                                Text(art.feedTitle, fontSize = 11.sp, color = Emerald)
                                             }
                                         }
                                     }
-                                    Spacer(Modifier.height(6.dp))
-                                    Text(
-                                        art.title,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = if (art.isRead) FontWeight.Normal else FontWeight.Bold,
-                                        color = if (art.isRead) Color(0xFF94A3B8) else Color.White
-                                    )
-                                    if (art.summary.isNotBlank()) {
-                                        Spacer(Modifier.height(4.dp))
-                                        Text(
-                                            art.summary,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = Color(0xFF94A3B8),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
+                                } else {
+                                    // Web-matched Feedly Magazine Card
+                                    Card(
+                                        shape = RoundedCornerShape(16.dp),
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                                        modifier = Modifier.fillMaxWidth().clickable { selectedArticleId = art.id }
+                                    ) {
+                                        Column(Modifier.padding(14.dp)) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                if (art.priorityScore >= 65) {
+                                                    Surface(
+                                                        color = Violet.copy(alpha = 0.16f),
+                                                        shape = RoundedCornerShape(99.dp)
+                                                    ) {
+                                                        Text(
+                                                            "Leo ${art.priorityScore}",
+                                                            color = Violet,
+                                                            fontSize = 10.sp,
+                                                            fontWeight = FontWeight.Bold,
+                                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                                        )
+                                                    }
+                                                }
+                                                Text(
+                                                    art.feedTitle,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    color = Emerald,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                Text(
+                                                    "${art.readingTimeMins}m read",
+                                                    fontSize = 11.sp,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                )
+                                            }
+                                            Spacer(Modifier.height(6.dp))
+                                            Text(
+                                                art.title,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = if (art.isRead) FontWeight.Normal else FontWeight.Bold,
+                                                color = if (art.isRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                                            )
+                                            if (art.summary.isNotBlank()) {
+                                                Spacer(Modifier.height(4.dp))
+                                                Text(
+                                                    art.summary,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            Spacer(Modifier.height(8.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                            ) {
+                                                IconButton(
+                                                    onClick = {
+                                                        val next = !art.isReadLater
+                                                        scope.launch {
+                                                            if (remoteApi != null) remoteApi.updateArticleState(art.id, isReadLater = next)
+                                                            else localEngine.updateArticleState(art.id, isReadLater = next)
+                                                            refreshState()
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        if (art.isReadLater) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
+                                                        contentDescription = "Read Later",
+                                                        tint = if (art.isReadLater) BlueAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        val next = !art.isRead
+                                                        scope.launch {
+                                                            if (remoteApi != null) remoteApi.updateArticleState(art.id, isRead = next)
+                                                            else localEngine.updateArticleState(art.id, isRead = next)
+                                                            refreshState()
+                                                        }
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Check,
+                                                        contentDescription = "Toggle Read",
+                                                        tint = if (art.isRead) Emerald else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                                IconButton(
+                                                    onClick = {
+                                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(art.url)))
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.OpenInNew,
+                                                        contentDescription = "Open Original",
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(17.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -466,43 +815,45 @@ fun MainWorkspace(
 }
 
 @Composable
-fun ManageLocalFeedsScreen(localEngine: LocalPulseFeedEngine, modifier: Modifier = Modifier) {
-    var feeds by remember { mutableStateOf(localEngine.listFeeds()) }
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text(
-                "Subscribed Feeds (${feeds.size})",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+private fun DrawerItem(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    badge: Int?,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                if (selected) Emerald.copy(alpha = 0.14f) else Color.Transparent,
+                RoundedCornerShape(12.dp)
             )
-            Spacer(Modifier.height(4.dp))
-        }
-        items(feeds, key = { it.id }) { feed ->
-            Card(
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = iconTint, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(12.dp))
+        Text(
+            label,
+            fontSize = 14.sp,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+            color = if (selected) Emerald else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (badge != null) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(6.dp)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(feed.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(feed.category, style = MaterialTheme.typography.labelSmall, color = Emerald)
-                        Text(feed.feedUrl, style = MaterialTheme.typography.bodySmall, color = Color(0xFF94A3B8), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                    IconButton(onClick = {
-                        localEngine.deleteFeed(feed.id)
-                        feeds = localEngine.listFeeds()
-                    }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Unfollow", tint = Color(0xFFF87171))
-                    }
-                }
+                Text(
+                    "$badge",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                )
             }
         }
     }
@@ -512,10 +863,12 @@ fun ManageLocalFeedsScreen(localEngine: LocalPulseFeedEngine, modifier: Modifier
 fun DiscoverFeedsScreen(
     localEngine: LocalPulseFeedEngine,
     remoteApi: PulseFeedApi?,
+    onSubscribed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
     var query by remember { mutableStateOf("") }
+    var directUrl by remember { mutableStateOf("") }
     var selectedCat by remember { mutableStateOf("All") }
     var categories by remember { mutableStateOf(listOf("All", "Tech", "Cybersecurity", "AI & ML", "Cloud & Infra", "World News", "Finance", "Science", "Sports", "Gaming")) }
     var results by remember { mutableStateOf<List<FeedSearchItem>>(emptyList()) }
@@ -524,11 +877,8 @@ fun DiscoverFeedsScreen(
     LaunchedEffect(query, selectedCat, remoteApi) {
         loading = true
         try {
-            val res = if (remoteApi != null) {
-                remoteApi.searchFeeds(query, selectedCat)
-            } else {
-                localEngine.searchFeeds(query, selectedCat)
-            }
+            val res = if (remoteApi != null) remoteApi.searchFeeds(query, selectedCat)
+            else localEngine.searchFeeds(query, selectedCat)
             if (res.categories.isNotEmpty()) categories = res.categories
             results = res.results
         } catch (_: Exception) {
@@ -545,37 +895,72 @@ fun DiscoverFeedsScreen(
             leadingIcon = { Icon(Icons.Default.Search, null) },
             singleLine = true,
             shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 6.dp)
         )
+
+        // Quick Direct RSS URL Add Row
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = directUrl,
+                onValueChange = { directUrl = it },
+                placeholder = { Text("Or paste RSS/Atom URL...") },
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                enabled = directUrl.startsWith("http"),
+                onClick = {
+                    val u = directUrl.trim()
+                    directUrl = ""
+                    scope.launch {
+                        runCatching {
+                            if (remoteApi != null) remoteApi.subscribeFeed(u, u)
+                            else localEngine.subscribeFeed(u, u, "Custom")
+                            onSubscribed()
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark)
+            ) {
+                Text("Add")
+            }
+        }
 
         Row(
             modifier = Modifier
                 .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 14.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             categories.forEach { cat ->
                 FilterChip(
                     selected = selectedCat == cat,
                     onClick = { selectedCat = cat },
-                    label = { Text(cat) }
+                    label = { Text(cat, fontSize = 12.sp) }
                 )
             }
         }
 
         if (loading && results.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Emerald)
             }
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(results, key = { it.feedUrl }) { item ->
                     Card(
                         shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(14.dp),
@@ -583,12 +968,17 @@ fun DiscoverFeedsScreen(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text(item.title, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text(item.category, style = MaterialTheme.typography.labelSmall, color = Emerald)
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(item.category, style = MaterialTheme.typography.labelSmall, color = Emerald)
+                                    if (item.source == "topic_feed") {
+                                        Text("• Live Topic", style = MaterialTheme.typography.labelSmall, color = Violet)
+                                    }
+                                }
                                 if (item.description.isNotBlank()) {
                                     Text(
                                         item.description,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = Color(0xFF94A3B8),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -596,23 +986,26 @@ fun DiscoverFeedsScreen(
                             }
                             Spacer(Modifier.width(10.dp))
                             if (item.alreadySubscribed) {
-                                Text("Following", color = Emerald, style = MaterialTheme.typography.labelMedium)
+                                Text("Following ✓", color = Emerald, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                             } else {
-                                FilledTonalButton(onClick = {
-                                    scope.launch {
-                                        try {
-                                            if (remoteApi != null) {
-                                                remoteApi.subscribeFeed(item.feedUrl, item.title)
-                                            } else {
-                                                localEngine.subscribeFeed(item.feedUrl, item.title, item.category)
+                                Button(
+                                    onClick = {
+                                        scope.launch {
+                                            runCatching {
+                                                if (remoteApi != null) remoteApi.subscribeFeed(item.feedUrl, item.title)
+                                                else localEngine.subscribeFeed(item.feedUrl, item.title, item.category)
+                                                results = results.map {
+                                                    if (it.feedUrl == item.feedUrl) it.copy(alreadySubscribed = true) else it
+                                                }
+                                                onSubscribed()
                                             }
-                                            results = results.map {
-                                                if (it.feedUrl == item.feedUrl) it.copy(alreadySubscribed = true) else it
-                                            }
-                                        } catch (_: Exception) {}
-                                    }
-                                }) {
-                                    Text("Follow")
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldDark),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Follow", fontSize = 12.sp)
                                 }
                             }
                         }
@@ -635,28 +1028,41 @@ fun ArticleReaderScreen(
     val scope = rememberCoroutineScope()
     var detail by remember { mutableStateOf<ArticleDetailResp?>(null) }
     var summarizing by remember { mutableStateOf(false) }
+    var serif by remember { mutableStateOf(true) }
+    var sepia by remember { mutableStateOf(false) }
 
     LaunchedEffect(articleId, remoteApi) {
-        try {
+        runCatching {
             val d = if (remoteApi != null) remoteApi.getArticle(articleId) else localEngine.getArticle(articleId)
             detail = d
             if (d != null && !d.isRead) {
                 if (remoteApi != null) remoteApi.updateArticleState(articleId, isRead = true)
                 else localEngine.updateArticleState(articleId, isRead = true)
             }
-        } catch (_: Exception) {}
+        }
     }
 
+    val bgColor = if (sepia) Color(0xFFF8F3E6) else MaterialTheme.colorScheme.background
+    val fgColor = if (sepia) Color(0xFF2C251D) else MaterialTheme.colorScheme.onBackground
+
     Scaffold(
+        containerColor = bgColor,
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = bgColor, titleContentColor = fgColor, navigationIconContentColor = fgColor, actionIconContentColor = fgColor),
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                title = { Text(detail?.feedTitle ?: "Reader", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text(detail?.feedTitle ?: "Reader", fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 actions = {
+                    TextButton(onClick = { serif = !serif }) {
+                        Text(if (serif) "Serif" else "Sans", color = fgColor, fontSize = 12.sp)
+                    }
+                    IconButton(onClick = { sepia = !sepia }) {
+                        Icon(Icons.Default.MenuBook, contentDescription = "Sepia Mode", tint = if (sepia) AmberAccent else fgColor)
+                    }
                     detail?.let { d ->
                         IconButton(onClick = {
                             scope.launch {
@@ -667,15 +1073,15 @@ fun ArticleReaderScreen(
                             }
                         }) {
                             Icon(
-                                Icons.Default.Bookmark,
+                                if (d.isReadLater) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                                 contentDescription = "Read Later",
-                                tint = if (d.isReadLater) Emerald else Color.White
+                                tint = if (d.isReadLater) BlueAccent else fgColor
                             )
                         }
                         IconButton(onClick = {
                             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(d.url)))
                         }) {
-                            Icon(Icons.Default.OpenInBrowser, contentDescription = "Open Original")
+                            Icon(Icons.Default.OpenInBrowser, contentDescription = "Open Original", tint = Emerald)
                         }
                     }
                 }
@@ -685,7 +1091,7 @@ fun ArticleReaderScreen(
         val d = detail
         if (d == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = Emerald)
             }
         } else {
             Column(
@@ -693,20 +1099,28 @@ fun ArticleReaderScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(18.dp)
+                    .padding(20.dp)
             ) {
-                Text(d.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(6.dp))
                 Text(
                     "${d.feedTitle} • ${d.readingTimeMins} min read • Leo ${d.priorityScore}",
                     style = MaterialTheme.typography.labelMedium,
                     color = Emerald
                 )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    d.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontFamily = if (serif) FontFamily.Serif else FontFamily.SansSerif,
+                    fontWeight = FontWeight.Bold,
+                    color = fgColor
+                )
                 Spacer(Modifier.height(16.dp))
 
+                // Web-matched Leo Intelligence Brief Card
                 Card(
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Violet.copy(alpha = 0.14f)),
+                    colors = CardDefaults.cardColors(containerColor = Violet.copy(alpha = 0.12f)),
+                    border = BorderStroke(1.dp, Violet.copy(alpha = 0.3f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(Modifier.padding(14.dp)) {
@@ -715,38 +1129,49 @@ fun ArticleReaderScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Leo AI Brief", fontWeight = FontWeight.Bold, color = Violet)
-                            TextButton(
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("LEO INTELLIGENCE BRIEF", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Violet)
+                                d.aiSentiment?.let { sent ->
+                                    Surface(color = Violet, shape = RoundedCornerShape(99.dp)) {
+                                        Text(sent, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp))
+                                    }
+                                }
+                            }
+                            Button(
                                 enabled = !summarizing,
                                 onClick = {
                                     scope.launch {
                                         summarizing = true
-                                        try {
-                                            val res = if (remoteApi != null) {
-                                                remoteApi.generateAiSummary(d.id)
-                                            } else {
-                                                localEngine.generateLocalSummary(d.id)
-                                            }
+                                        runCatching {
+                                            val res = if (remoteApi != null) remoteApi.generateAiSummary(d.id)
+                                            else localEngine.generateLocalSummary(d.id)
                                             detail = d.copy(aiSummary = res.aiSummary, aiSentiment = res.aiSentiment)
-                                        } catch (_: Exception) {}
+                                        }
                                         summarizing = false
                                     }
-                                }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Violet),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                modifier = Modifier.height(30.dp)
                             ) {
-                                Text(if (summarizing) "Analyzing..." else "Summarize")
+                                Text(if (summarizing) "..." else "AI Summary", fontSize = 11.sp)
                             }
                         }
                         if (!d.aiSummary.isNullOrBlank()) {
-                            Text(d.aiSummary, style = MaterialTheme.typography.bodyMedium)
+                            Spacer(Modifier.height(8.dp))
+                            Text(d.aiSummary, style = MaterialTheme.typography.bodyMedium, color = fgColor)
                         }
                     }
                 }
 
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(20.dp))
                 Text(
                     d.contentText.ifBlank { d.summary },
-                    style = MaterialTheme.typography.bodyLarge,
-                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.15f
+                    fontSize = 17.sp,
+                    lineHeight = 27.sp,
+                    fontFamily = if (serif) FontFamily.Serif else FontFamily.SansSerif,
+                    color = fgColor
                 )
             }
         }

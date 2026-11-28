@@ -748,6 +748,17 @@ pub async fn get_settings(State(state): State<AppState>, user: AuthUser) -> impl
         llm_model: get("llm_model", "gemini-2.5-flash"),
         llm_api_key_set: !get("llm_api_key", "").is_empty(),
         llm_base_url: get("llm_base_url", ""),
+        app_base_url: get("app_base_url", ""),
+        oauth_google_enabled: get("oauth_google_enabled", "false") == "true",
+        oauth_google_client_id: get("oauth_google_client_id", ""),
+        oauth_google_secret_set: !get("oauth_google_client_secret", "").is_empty(),
+        oauth_entra_enabled: get("oauth_entra_enabled", "false") == "true",
+        oauth_entra_tenant_id: get("oauth_entra_tenant_id", "common"),
+        oauth_entra_client_id: get("oauth_entra_client_id", ""),
+        oauth_entra_secret_set: !get("oauth_entra_client_secret", "").is_empty(),
+        oauth_facebook_enabled: get("oauth_facebook_enabled", "false") == "true",
+        oauth_facebook_client_id: get("oauth_facebook_client_id", ""),
+        oauth_facebook_secret_set: !get("oauth_facebook_client_secret", "").is_empty(),
         sso_enabled: get("sso_enabled", "false") == "true",
         sso_provider_name: get("sso_provider_name", "Microsoft Entra ID / OIDC"),
         sso_issuer_url: get("sso_issuer_url", ""),
@@ -764,6 +775,17 @@ pub struct UpdateSettingsReq {
     pub llm_model: Option<String>,
     pub llm_api_key: Option<String>,
     pub llm_base_url: Option<String>,
+    pub app_base_url: Option<String>,
+    pub oauth_google_enabled: Option<bool>,
+    pub oauth_google_client_id: Option<String>,
+    pub oauth_google_client_secret: Option<String>,
+    pub oauth_entra_enabled: Option<bool>,
+    pub oauth_entra_tenant_id: Option<String>,
+    pub oauth_entra_client_id: Option<String>,
+    pub oauth_entra_client_secret: Option<String>,
+    pub oauth_facebook_enabled: Option<bool>,
+    pub oauth_facebook_client_id: Option<String>,
+    pub oauth_facebook_client_secret: Option<String>,
     pub sso_enabled: Option<bool>,
     pub sso_provider_name: Option<String>,
     pub sso_issuer_url: Option<String>,
@@ -790,12 +812,19 @@ pub async fn update_settings(
 
     if let Some(ref v) = req.llm_provider { set("llm_provider", v); }
     if let Some(ref v) = req.llm_model { set("llm_model", v); }
-    if let Some(ref v) = req.llm_api_key {
-        if !v.is_empty() {
-            set("llm_api_key", v);
-        }
-    }
+    if let Some(ref v) = req.llm_api_key { if !v.is_empty() { set("llm_api_key", v); } }
     if let Some(ref v) = req.llm_base_url { set("llm_base_url", v); }
+    if let Some(ref v) = req.app_base_url { set("app_base_url", v.trim()); }
+    if let Some(v) = req.oauth_google_enabled { set("oauth_google_enabled", if v { "true" } else { "false" }); }
+    if let Some(ref v) = req.oauth_google_client_id { set("oauth_google_client_id", v.trim()); }
+    if let Some(ref v) = req.oauth_google_client_secret { if !v.is_empty() { set("oauth_google_client_secret", v.trim()); } }
+    if let Some(v) = req.oauth_entra_enabled { set("oauth_entra_enabled", if v { "true" } else { "false" }); }
+    if let Some(ref v) = req.oauth_entra_tenant_id { set("oauth_entra_tenant_id", v.trim()); }
+    if let Some(ref v) = req.oauth_entra_client_id { set("oauth_entra_client_id", v.trim()); }
+    if let Some(ref v) = req.oauth_entra_client_secret { if !v.is_empty() { set("oauth_entra_client_secret", v.trim()); } }
+    if let Some(v) = req.oauth_facebook_enabled { set("oauth_facebook_enabled", if v { "true" } else { "false" }); }
+    if let Some(ref v) = req.oauth_facebook_client_id { set("oauth_facebook_client_id", v.trim()); }
+    if let Some(ref v) = req.oauth_facebook_client_secret { if !v.is_empty() { set("oauth_facebook_client_secret", v.trim()); } }
     if let Some(v) = req.sso_enabled { set("sso_enabled", if v { "true" } else { "false" }); }
     if let Some(ref v) = req.sso_provider_name { set("sso_provider_name", v); }
     if let Some(ref v) = req.sso_issuer_url { set("sso_issuer_url", v); }

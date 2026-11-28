@@ -86,8 +86,15 @@ export default function App() {
     localStorage.setItem('pulsefeed_theme', darkMode ? 'dark' : 'light');
   }, [darkMode]);
 
-  // Detect Personal vs Enterprise edition and verify session
+  // Detect Personal vs Enterprise edition, handle OAuth callback token, and verify session
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthToken = urlParams.get('oauth_token');
+    if (oauthToken) {
+      setToken(oauthToken);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     apiFetch<EditionInfo>('/edition')
       .then((info) => {
         setEdition(info.edition);

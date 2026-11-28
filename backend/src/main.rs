@@ -82,11 +82,14 @@ async fn main() {
                 "is_personal": st.config.is_personal(),
             }))
         }))
-        // Auth
+        // Auth & OAuth2 Identity Providers (Google, Microsoft Entra ID, Facebook)
         .route("/auth/login", post(routes::auth_routes::login))
         .route("/auth/register", post(routes::auth_routes::register))
         .route("/auth/me", get(routes::auth_routes::me))
         .route("/auth/sso/config", get(routes::auth_routes::sso_public_config))
+        .route("/auth/providers", get(routes::oauth_routes::list_public_providers))
+        .route("/auth/oauth/{provider}/start", get(routes::oauth_routes::oauth_start))
+        .route("/auth/oauth/{provider}/callback", get(routes::oauth_routes::oauth_callback))
         // Sidebar, Folders, Feeds, Topic Search, OPML
         .route("/sidebar", get(routes::feeds_routes::get_sidebar))
         .route("/folders", post(routes::feeds_routes::create_folder))

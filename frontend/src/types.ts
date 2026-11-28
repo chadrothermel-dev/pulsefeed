@@ -175,6 +175,17 @@ export interface SystemSettings {
   llm_model: string;
   llm_api_key_set: boolean;
   llm_base_url: string;
+  app_base_url: string;
+  oauth_google_enabled: boolean;
+  oauth_google_client_id: string;
+  oauth_google_secret_set: boolean;
+  oauth_entra_enabled: boolean;
+  oauth_entra_tenant_id: string;
+  oauth_entra_client_id: string;
+  oauth_entra_secret_set: boolean;
+  oauth_facebook_enabled: boolean;
+  oauth_facebook_client_id: string;
+  oauth_facebook_secret_set: boolean;
   sso_enabled: boolean;
   sso_provider_name: string;
   sso_issuer_url: string;
